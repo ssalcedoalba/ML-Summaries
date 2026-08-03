@@ -1,0 +1,1194 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>El Perceptrón (1958) — explicado paso a paso</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wght@600;800&family=IBM+Plex+Mono:wght@400;500&family=Newsreader:ital,opsz,wght@0,6..72,400;0,6..72,600;1,6..72,400&display=swap" rel="stylesheet">
+<style>
+:root{
+  --bg:#DCDED3;
+  --surface:#EDEEE7;
+  --surface-2:#E4E6DC;
+  --ink:#161A16;
+  --ink-soft:#5A6058;
+  --rule:#B4B9AB;
+  --exc:#C4630D;      /* excitatorio / unidad activa */
+  --inh:#16626B;      /* inhibitorio */
+  --resp:#33408C;     /* respuesta */
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--ink);
+  font-family:"Newsreader",Georgia,"Times New Roman",serif;
+  font-size:18px;
+  line-height:1.62;
+  -webkit-font-smoothing:antialiased;
+}
+body::before{
+  /* trama de puntos: la retina de S-points, de fondo */
+  content:"";
+  position:fixed; inset:0;
+  background-image:radial-gradient(var(--rule) 1px, transparent 1.2px);
+  background-size:22px 22px;
+  opacity:.32;
+  pointer-events:none;
+  z-index:0;
+}
+main,header,footer,.rail{position:relative;z-index:1}
+
+h1,h2,h3,.dsp{font-family:"Archivo",Helvetica,Arial,sans-serif;font-weight:800;letter-spacing:-.02em;line-height:1.02}
+.mono{font-family:"IBM Plex Mono",ui-monospace,Menlo,monospace}
+
+/* ---------- layout ---------- */
+.wrap{max-width:1180px;margin:0 auto;padding:0 28px}
+.col{max-width:720px}
+section{padding:76px 0;border-top:1px solid var(--rule)}
+section:first-of-type{border-top:none}
+
+/* ---------- hero ---------- */
+header.hero{padding:56px 0 20px;overflow:hidden}
+.stamp{
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--ink-soft);
+  display:flex;flex-wrap:wrap;gap:14px;align-items:center;
+}
+.stamp b{font-weight:500;color:var(--ink)}
+.stamp .dot{width:5px;height:5px;border-radius:50%;background:var(--exc);display:inline-block}
+h1{
+  font-size:clamp(52px,11.5vw,148px);
+  margin:26px 0 0;
+  text-transform:uppercase;
+  letter-spacing:-.045em;
+}
+h1 .thin{-webkit-text-stroke:2px var(--ink);color:transparent;display:block}
+.lede{
+  font-size:clamp(20px,2.3vw,27px);
+  max-width:660px;margin:26px 0 0;line-height:1.4;
+}
+.byline{margin-top:22px;max-width:620px;color:var(--ink-soft);font-size:16.5px}
+.hero-fig{margin:38px 0 0;background:var(--surface);border:1px solid var(--rule);border-radius:2px;padding:10px}
+.hero-fig svg{display:block;width:100%;height:auto}
+.scrollcue{
+  margin:26px 0 6px;font-family:"IBM Plex Mono",monospace;font-size:11.5px;
+  letter-spacing:.18em;text-transform:uppercase;color:var(--ink-soft);
+}
+.scrollcue span{display:inline-block;animation:bob 1.8s ease-in-out infinite}
+@keyframes bob{0%,100%{transform:translateY(0)}50%{transform:translateY(5px)}}
+
+/* ---------- rail ---------- */
+.rail{
+  position:fixed;left:20px;top:0;height:100vh;width:190px;
+  display:flex;flex-direction:column;justify-content:center;gap:0;
+  z-index:5;pointer-events:none;
+}
+.rail ol{list-style:none;margin:0;padding:0;border-left:1px solid var(--rule);position:relative}
+.rail .fill{position:absolute;left:-1px;top:0;width:1px;background:var(--exc);height:0}
+.rail li{margin:0;pointer-events:auto}
+.rail a{
+  display:block;padding:3px 0 3px 12px;text-decoration:none;color:var(--ink-soft);
+  font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.08em;
+  text-transform:uppercase;opacity:.55;transition:opacity .25s,color .25s,transform .25s;
+}
+.rail a:hover{opacity:1;color:var(--ink);transform:translateX(2px)}
+.rail a.on{opacity:1;color:var(--ink);font-weight:500}
+.rail a.on::before{content:"";position:absolute;left:-3px;width:5px;height:5px;border-radius:50%;background:var(--exc);margin-top:7px}
+.topbar{display:none;position:fixed;top:0;left:0;height:3px;background:var(--exc);width:0;z-index:20}
+@media(max-width:1240px){
+  .rail{display:none}
+  .topbar{display:block}
+}
+
+/* ---------- secciones ---------- */
+.eyebrow{
+  display:flex;align-items:baseline;gap:14px;margin-bottom:14px;
+  font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.16em;text-transform:uppercase;color:var(--ink-soft);
+}
+.glyph{
+  font-family:"IBM Plex Mono",monospace;font-weight:500;font-size:20px;letter-spacing:0;
+  color:var(--exc);border:1px solid var(--exc);border-radius:2px;
+  min-width:44px;height:34px;display:inline-flex;align-items:center;justify-content:center;
+  text-transform:none;padding:0 8px;
+}
+h2{font-size:clamp(30px,4.6vw,52px);margin:0 0 20px;letter-spacing:-.035em}
+h3{font-size:20px;margin:34px 0 8px;letter-spacing:-.01em}
+p{margin:0 0 18px}
+.col p:last-child{margin-bottom:0}
+strong{font-weight:600}
+em{font-style:italic}
+
+/* ---------- piezas ---------- */
+.card{background:var(--surface);border:1px solid var(--rule);border-radius:2px;padding:22px 24px;margin:30px 0}
+.card.tight{padding:16px 18px}
+.cap{
+  font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.1em;
+  text-transform:uppercase;color:var(--ink-soft);margin:0 0 14px;
+}
+figcaption{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.06em;color:var(--ink-soft);margin-top:12px;line-height:1.55;text-transform:none}
+.k{font-family:"IBM Plex Mono",monospace;font-size:.88em;background:var(--surface-2);border:1px solid var(--rule);border-radius:2px;padding:1px 5px;white-space:nowrap}
+.k.exc{color:var(--exc);border-color:#d9a570;background:#f3e5d4}
+.k.inh{color:var(--inh);border-color:#8fb4b7;background:#dcebec}
+.k.res{color:var(--resp);border-color:#9aa2ce;background:#e0e3f2}
+
+.two{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+.three{display:grid;grid-template-columns:repeat(3,1fr);gap:18px}
+@media(max-width:820px){.two,.three{grid-template-columns:1fr}}
+
+ul.clean{list-style:none;padding:0;margin:0}
+ul.clean li{padding:12px 0;border-top:1px solid var(--rule);display:grid;grid-template-columns:36px 1fr;gap:14px;align-items:start}
+ul.clean li:first-child{border-top:none}
+ul.clean .n{font-family:"IBM Plex Mono",monospace;font-size:12px;color:var(--exc);padding-top:5px;letter-spacing:.06em}
+
+table{width:100%;border-collapse:collapse;font-size:15.5px}
+th,td{text-align:left;padding:11px 10px;border-top:1px solid var(--rule);vertical-align:top}
+th{font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);font-weight:400}
+tbody tr:hover{background:var(--surface-2)}
+td.lab{font-family:"IBM Plex Mono",monospace;font-size:13px}
+
+button{
+  font-family:"IBM Plex Mono",monospace;font-size:12px;letter-spacing:.09em;text-transform:uppercase;
+  background:var(--ink);color:var(--surface);border:1px solid var(--ink);border-radius:2px;
+  padding:9px 15px;cursor:pointer;transition:background .18s,color .18s;
+}
+button:hover{background:transparent;color:var(--ink)}
+button.ghost{background:transparent;color:var(--ink)}
+button.ghost:hover{background:var(--ink);color:var(--surface)}
+button:focus-visible,a:focus-visible,input:focus-visible{outline:2px solid var(--exc);outline-offset:3px}
+.controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center;margin-top:16px}
+
+input[type=range]{-webkit-appearance:none;appearance:none;height:2px;background:var(--rule);border-radius:2px;width:100%;margin:14px 0}
+input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--exc);cursor:pointer;border:2px solid var(--surface)}
+input[type=range]::-moz-range-thumb{width:16px;height:16px;border-radius:50%;background:var(--exc);cursor:pointer;border:2px solid var(--surface)}
+.slider-row{display:grid;grid-template-columns:auto 1fr auto;gap:14px;align-items:center}
+.slider-row .lbl{font-family:"IBM Plex Mono",monospace;font-size:11.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+.val{font-family:"IBM Plex Mono",monospace;font-size:14px;min-width:56px;text-align:right}
+
+.readouts{display:flex;flex-wrap:wrap;gap:26px;margin-top:18px}
+.ro{min-width:84px}
+.ro .num{font-family:"Archivo",sans-serif;font-weight:800;font-size:30px;line-height:1;letter-spacing:-.03em}
+.ro .lbl{font-family:"IBM Plex Mono",monospace;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--ink-soft);margin-top:6px}
+
+/* retina grids */
+.grid{display:grid;gap:3px;touch-action:manipulation}
+.cell{aspect-ratio:1;background:var(--surface-2);border:1px solid #cdd0c4;border-radius:1px;position:relative;cursor:pointer;transition:background .12s}
+.cell.lit{background:var(--ink);border-color:var(--ink)}
+.cell .mark{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:"IBM Plex Mono",monospace;font-size:13px;font-weight:500;pointer-events:none}
+.cell.o-exc .mark{color:var(--exc)}
+.cell.o-inh .mark{color:var(--inh)}
+.cell.lit.o-exc .mark{color:#f0a45c}
+.cell.lit.o-inh .mark{color:#7fc4cb}
+.grid.static .cell{cursor:default}
+
+.fireboard{display:flex;gap:22px;align-items:center;flex-wrap:wrap;margin-top:18px}
+.lamp{width:70px;height:70px;border-radius:50%;border:2px solid var(--rule);background:var(--surface-2);display:flex;align-items:center;justify-content:center;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.08em;color:var(--ink-soft);transition:background .18s,box-shadow .25s,color .18s,border-color .18s}
+.lamp.on{background:var(--exc);border-color:var(--exc);color:#fff;box-shadow:0 0 0 8px rgba(196,99,13,.16)}
+
+.bars{position:relative;height:120px;display:flex;align-items:flex-end;gap:10px;padding-bottom:0}
+.bars .b{width:34px;background:var(--exc);transition:height .3s}
+.bars .b.neg{background:var(--inh)}
+.thline{position:absolute;left:0;right:0;border-top:2px dashed var(--ink);pointer-events:none}
+.thline span{position:absolute;right:0;top:-19px;font-family:"IBM Plex Mono",monospace;font-size:11px;background:var(--surface);padding:0 4px}
+
+svg .flow{stroke-dasharray:5 9;animation:flow 1.1s linear infinite}
+@keyframes flow{to{stroke-dashoffset:-14}}
+
+.pill{display:inline-flex;align-items:center;gap:8px;font-family:"IBM Plex Mono",monospace;font-size:11px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-soft)}
+.sw{width:11px;height:11px;border-radius:2px;display:inline-block}
+
+.quote{border-left:3px solid var(--exc);padding:4px 0 4px 20px;margin:28px 0;font-size:21px;line-height:1.45}
+
+.reveal{opacity:0;transform:translateY(20px)}
+.reveal.in{opacity:1;transform:none;transition:opacity .7s cubic-bezier(.2,.7,.3,1),transform .7s cubic-bezier(.2,.7,.3,1)}
+
+footer{border-top:1px solid var(--rule);padding:54px 0 70px;color:var(--ink-soft);font-size:15.5px}
+footer a{color:var(--ink)}
+
+@media (prefers-reduced-motion:reduce){
+  *{animation-duration:.001s!important;animation-iteration-count:1!important;transition-duration:.001s!important}
+  .reveal{opacity:1;transform:none}
+  html{scroll-behavior:auto}
+}
+</style>
+</head>
+<body>
+
+<div class="topbar" id="topbar"></div>
+
+<nav class="rail" aria-label="Índice">
+  <ol id="railList"><div class="fill" id="railFill"></div></ol>
+</nav>
+
+<header class="hero">
+  <div class="wrap">
+    <div class="stamp">
+      <span class="dot"></span><b>Psychological Review</b><span>Vol. 65, N.º 6 · 1958</span><span>Cornell Aeronautical Laboratory</span>
+    </div>
+    <h1>El<br>Perceptrón<span class="thin">explicado</span></h1>
+    <p class="lede">Una máquina que no guarda imágenes. Guarda <em>preferencias por una respuesta</em>, y con eso aprende a distinguir un cuadrado de un círculo.</p>
+    <p class="byline">Guía interactiva del artículo de <b>Frank Rosenblatt</b>, «The perceptron: a probabilistic model for information storage and organization in the brain». Toca, arrastra y entrena: cada figura de esta página funciona de verdad.</p>
+
+    <figure class="hero-fig">
+      <svg id="heroNet" viewBox="0 0 900 300" role="img" aria-label="Diagrama animado: retina de puntos sensoriales conectada a dos capas de unidades de asociación y a tres unidades de respuesta"></svg>
+    </figure>
+    <p class="scrollcue"><span>↓</span> Desplázate para empezar</p>
+  </div>
+</header>
+
+<main class="wrap">
+
+<!-- 1 -->
+<section id="s1">
+  <div class="col reveal">
+    <div class="eyebrow"><span class="glyph">Q</span><span>Punto de partida</span></div>
+    <h2>Tres preguntas sobre el cerebro</h2>
+    <p>Rosenblatt abre el artículo diciendo que, si algún día queremos entender cómo un organismo reconoce, generaliza, recuerda y piensa, primero hay que responder tres cosas:</p>
+    <ul class="clean">
+      <li><span class="n">01</span><span><b>¿Cómo se detecta el mundo físico?</b> Esto ya lo estudia la fisiología sensorial: es la única de las tres con respuestas decentes en 1958.</span></li>
+      <li><span class="n">02</span><span><b>¿En qué forma se almacena la información?</b> Aquí empieza la especulación.</span></li>
+      <li><span class="n">03</span><span><b>¿Cómo influye lo almacenado en el reconocimiento y la conducta?</b> Es decir: ¿para qué sirve un recuerdo cuando llega un estímulo nuevo?</span></li>
+    </ul>
+    <p style="margin-top:26px">El artículo entero es un intento de responder la 2 y la 3 a la vez, con un modelo que se puede calcular con números: el <b>perceptrón</b>.</p>
+  </div>
+</section>
+
+<!-- 2 -->
+<section id="s2">
+  <div class="col reveal">
+    <div class="eyebrow"><span class="glyph">≠</span><span>La discusión de fondo</span></div>
+    <h2>¿Fotografía o cableado?</h2>
+    <p>Ante la pregunta 2 había dos bandos.</p>
+  </div>
+
+  <div class="two reveal">
+    <div class="card">
+      <p class="cap">Hipótesis A · memoria codificada</p>
+      <p>El cerebro guarda una <b>representación</b> del estímulo, con una correspondencia uno a uno entre lo que se vio y lo que quedó grabado. Si conociéramos el «diagrama de cableado», podríamos revelar el recuerdo como quien revela un negativo fotográfico.</p>
+      <p style="margin-bottom:0"><b>Consecuencia incómoda:</b> reconocer algo exige comparar el estímulo actual contra el archivo, uno por uno.</p>
+    </div>
+    <div class="card">
+      <p class="cap">Hipótesis B · conexionista</p>
+      <p>Las imágenes nunca se graban. El sistema nervioso es una <b>central de conmutación</b>: lo que queda son vías nuevas entre centros de actividad. La información se almacena como una <em>preferencia por una respuesta determinada</em>.</p>
+      <p style="margin-bottom:0"><b>Ventaja:</b> el estímulo recorre por sí solo la vía que se creó y dispara la respuesta correcta. No hace falta ningún proceso aparte de «identificación».</p>
+    </div>
+  </div>
+
+  <div class="col reveal">
+    <p>Rosenblatt se pone del lado B, la tradición empirista, y hereda de Hebb, Hayek, Uttley y Ashby cinco supuestos que conviene tener a mano, porque explican casi todas las decisiones raras del modelo:</p>
+    <ul class="clean">
+      <li><span class="n">A1</span><span>Las conexiones no son iguales de un organismo a otro: al nacer, las redes importantes están <b>cableadas al azar</b>, con muy pocas restricciones genéticas.</span></li>
+      <li><span class="n">A2</span><span>Ese cableado tiene <b>plasticidad</b>: tras un periodo de actividad cambia la probabilidad de que un estímulo en un grupo de células provoque respuesta en otro.</span></li>
+      <li><span class="n">A3</span><span>Los estímulos <b>parecidos</b> tienden a formar vías hacia las mismas células de respuesta; los muy distintos, hacia células distintas.</span></li>
+      <li><span class="n">A4</span><span>El <b>refuerzo</b> positivo o negativo puede facilitar o estorbar la formación de conexiones que está en curso.</span></li>
+      <li><span class="n">A5</span><span>La <b>similitud no es geometría</b>: no es una propiedad de los cuadrados o los círculos, sino del sistema que percibe. La estructura del sistema y el entorno deciden en qué clases se divide el mundo.</span></li>
+    </ul>
+    <p class="quote">El modelo se escribe en el lenguaje de la probabilidad, y no en el de la lógica booleana, precisamente porque la estructura fina es desconocida y azarosa: sólo se puede describir la organización gruesa.</p>
+  </div>
+</section>
+
+<!-- 3 -->
+<section id="s3">
+  <div class="col reveal">
+    <div class="eyebrow"><span class="glyph">S→R</span><span>Anatomía</span></div>
+    <h2>Las piezas de la máquina</h2>
+    <p>Un <em>fotoperceptrón</em> —el que responde a patrones ópticos— tiene tres o cuatro niveles. La señal va siempre hacia adelante hasta el último tramo.</p>
+  </div>
+
+  <div class="card reveal">
+    <p class="cap">Figura 1 · organización de un perceptrón</p>
+    <svg id="anatomyNet" viewBox="0 0 900 300" role="img" aria-label="Retina, área de proyección, área de asociación y unidades de respuesta"></svg>
+    <figcaption>Pasa el cursor (o toca) sobre cada columna para resaltarla.</figcaption>
+  </div>
+
+  <div class="col reveal">
+    <ul class="clean">
+      <li><span class="n">S</span><span><b>Retina de puntos sensoriales (S-points).</b> Responden todo o nada: encendido o apagado.</span></li>
+      <li><span class="n">A<sub>I</sub></span><span><b>Área de proyección.</b> Unidades de asociación cuyos <em>puntos de origen</em> —los S-points que le llegan— están <b>agrupados</b> alrededor de un centro; el número de orígenes cae exponencialmente con la distancia a ese centro. Por eso este área es sensible a <b>contornos</b>. Puede omitirse.</span></li>
+      <li><span class="n">A<sub>II</sub></span><span><b>Área de asociación.</b> Idéntica a la anterior salvo en una cosa: sus conexiones con A<sub>I</sub> son <b>completamente aleatorias</b>, dispersas por toda el área de proyección.</span></li>
+      <li><span class="n">R</span><span><b>Unidades de respuesta.</b> Cada respuesta recibe de un montón de A-units tomadas al azar. Ese conjunto se llama el <b>source-set</b> (conjunto fuente) de esa respuesta.</span></li>
+    </ul>
+
+    <h3>El único tramo con retroalimentación</h3>
+    <p>Hasta A<sub>II</sub> todo va hacia adelante. Entre A<sub>II</sub> y las R hay conexiones en <b>ambos sentidos</b>, y Rosenblatt considera dos reglas posibles:</p>
+    <div class="two" style="margin:20px 0">
+      <div class="card tight"><p class="cap">Regla a</p><p style="margin:0">Cada respuesta manda realimentación <b>excitatoria</b> a su propio source-set. Anatómicamente es lo más plausible.</p></div>
+      <div class="card tight"><p class="cap">Regla b · la elegida</p><p style="margin:0">Cada respuesta manda realimentación <b>inhibitoria</b> al <em>complemento</em> de su source-set: apaga a todas las A-units que no le transmiten a ella. Es más fácil de analizar.</p></div>
+    </div>
+    <p>Con la regla b las respuestas se vuelven <b>mutuamente excluyentes</b>: si gana R₁, inhibe a R₂ <em>y</em> a su source-set. Es una competencia de todo o nada.</p>
+  </div>
+</section>
+
+<!-- 4 -->
+<section id="s4">
+  <div class="col reveal">
+    <div class="eyebrow"><span class="glyph">θ</span><span>La unidad de asociación</span></div>
+    <h2>Sumar, restar, disparar</h2>
+    <p>Una A-unit es sencilla. Tiene unos cuantos puntos de origen en la retina; unos son <span class="k exc">excitatorios +</span> y otros <span class="k inh">inhibitorios −</span>. Se hace la <b>suma algebraica</b> de lo que llega y se compara con el <b>umbral</b> <span class="k">θ</span>:</p>
+    <p class="quote mono" style="font-size:19px">si (excitación − inhibición) ≥ θ → la unidad dispara, todo o nada</p>
+    <p>Nada más. Cuando el umbral es fijo se habla de <b>modelo de umbral fijo</b>; si en vez de disparar la unidad respondiera de forma continua a la energía del estímulo, sería un <em>transductor continuo</em> (no se analiza aquí).</p>
+  </div>
+
+  <div class="card reveal">
+    <p class="cap">Pruébalo · enciende puntos de la retina y mira si la unidad dispara</p>
+    <div class="two" style="gap:28px;align-items:start">
+      <div>
+        <div class="grid" id="unitGrid" style="grid-template-columns:repeat(6,1fr)" aria-label="Retina de 36 puntos sensoriales, cada uno se puede encender"></div>
+        <div class="controls">
+          <button id="unitRand" class="ghost">Estímulo al azar</button>
+          <button id="unitClear" class="ghost">Apagar todo</button>
+          <button id="unitRewire" class="ghost">Recablear orígenes</button>
+        </div>
+      </div>
+      <div>
+        <div class="slider-row">
+          <span class="lbl">Umbral θ</span>
+          <input type="range" id="unitTheta" min="0" max="4" step="1" value="1">
+          <span class="val mono" id="unitThetaV">1</span>
+        </div>
+        <div class="bars" id="unitBars" style="margin-top:8px">
+          <div style="text-align:center"><div class="b" id="barE" style="height:0"></div></div>
+          <div style="text-align:center"><div class="b neg" id="barI" style="height:0"></div></div>
+          <div style="text-align:center"><div class="b" id="barA" style="height:0;background:var(--ink)"></div></div>
+          <div class="thline" id="unitTh"><span class="mono">θ</span></div>
+        </div>
+        <div class="mono" style="font-size:11px;letter-spacing:.08em;color:var(--ink-soft);display:flex;gap:10px;margin-top:6px">
+          <span style="width:34px;text-align:center">e</span><span style="width:34px;text-align:center">i</span><span style="width:44px;text-align:center">e−i</span>
+        </div>
+        <div class="fireboard">
+          <div class="lamp" id="unitLamp">OFF</div>
+          <div>
+            <div class="mono" id="unitEq" style="font-size:15px">e − i = 0 &nbsp;&lt;&nbsp; θ = 1</div>
+            <div class="mono" style="font-size:11.5px;color:var(--ink-soft);letter-spacing:.06em;margin-top:6px">5 orígenes excitatorios · 3 inhibitorios</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <figcaption>Los signos <b style="color:var(--exc)">+</b> y <b style="color:var(--inh)">−</b> marcan los puntos de origen de esta A-unit; están puestos al azar, como en el modelo. Subir θ o añadir inhibición hace que la unidad sea más difícil de excitar: esa es toda la palanca de diseño que tiene el sistema.</figcaption>
+  </div>
+</section>
+
+<!-- 5 -->
+<section id="s5">
+  <div class="col reveal">
+    <div class="eyebrow"><span class="glyph">Φ</span><span>Dinámica</span></div>
+    <h2>Dos fases: caos y luego un ganador</h2>
+    <p>Cuando llega un estímulo pasan dos cosas seguidas.</p>
+  </div>
+
+  <div class="card reveal">
+    <p class="cap">Figura 3 · fases de la respuesta</p>
+    <svg id="phaseNet" viewBox="0 0 900 300" role="img" aria-label="Animación de la fase predominante y postdominante"></svg>
+    <div class="controls" style="justify-content:space-between">
+      <div class="mono" id="phaseCaption" style="font-size:14px">—</div>
+      <button id="phaseStep" class="ghost">Siguiente estímulo</button>
+    </div>
+  </div>
+
+  <div class="col reveal">
+    <div class="two" style="margin:0 0 22px">
+      <div class="card tight"><p class="cap">Fase predominante</p><p style="margin:0">Una parte de las A-units, repartidas por todo el sistema, se activa. Las R siguen calladas. Dura poco.</p></div>
+      <div class="card tight"><p class="cap">Fase postdominante</p><p style="margin:0">Una respuesta se impone e inhibe al resto. La actividad queda limitada a <b>un solo source-set</b>.</p></div>
+    </div>
+    <p>¿Quién gana? Hay dos criterios posibles, y no dan el mismo resultado:</p>
+    <ul class="clean">
+      <li><span class="n">μ</span><span><b>Sistema discriminador de medias.</b> Gana la respuesta cuyas entradas tienen el mayor <em>valor medio</em>.</span></li>
+      <li><span class="n">Σ</span><span><b>Sistema discriminador de sumas.</b> Gana la que tiene el mayor <em>valor neto total</em>.</span></li>
+    </ul>
+    <p style="margin-top:22px">Casi siempre el sistema μ va mejor, porque las medias se ven menos afectadas por las variaciones aleatorias de cuántas unidades se activan en cada source-set.</p>
+    <p><b>Y aquí aparece el aprendizaje:</b> qué respuesta gana la primera vez es puro azar. Pero si se refuerza a las unidades activas —si se les deja ganar valor—, la próxima vez que aparezca el mismo estímulo esa misma respuesta tendrá ventaja. Eso, dice Rosenblatt, ya es aprender.</p>
+  </div>
+</section>
+
+<!-- 6 -->
+<section id="s6">
+  <div class="col reveal">
+    <div class="eyebrow"><span class="glyph">V</span><span>El único invento del modelo</span></div>
+    <h2>El «valor» de una célula</h2>
+    <p>Toda la teoría descansa en una sola variable inventada: <span class="k">V</span>, el <b>valor</b> de una A-unit. Puede ser una amplitud, una frecuencia, una latencia o la probabilidad de completar la transmisión. Si una unidad tiene valor alto, sus impulsos son más potentes o llegan con más seguridad.</p>
+    <p>La actividad tiende a subir el valor. La pregunta es <em>de dónde sale</em> ese aumento. Hay tres respuestas, y se comportan de forma muy distinta:</p>
+  </div>
+
+  <div class="card reveal">
+    <p class="cap">Tabla 1 · sistemas α, β y γ, en marcha</p>
+    <div class="three" id="vsys"></div>
+    <div class="controls">
+      <button id="vsysRun" class="ghost">Pausar</button>
+      <button id="vsysReset" class="ghost">Reiniciar</button>
+      <span class="pill"><span class="sw" style="background:var(--exc)"></span>unidad activa en este instante</span>
+    </div>
+    <figcaption>Cada barra es una A-unit del mismo source-set. En cada refuerzo se activan unas cuantas al azar.</figcaption>
+  </div>
+
+  <div class="col reveal">
+    <table>
+      <thead><tr><th>Sistema</th><th>Cómo reparte el valor</th><th>Efecto a largo plazo</th></tr></thead>
+      <tbody>
+        <tr><td class="lab">α<br><span style="color:var(--ink-soft)">ganancia sin compensar</span></td><td>Cada unidad activa gana +1 por cada impulso y lo conserva para siempre.</td><td>El valor medio del sistema <b>crece sin parar</b> con cada refuerzo.</td></tr>
+        <tr><td class="lab">β<br><span style="color:var(--ink-soft)">alimentación constante</span></td><td>El source-set recibe una cantidad fija <span class="k">K</span> por refuerzo, repartida entre sus células en proporción a su actividad.</td><td>El valor medio crece <b>con el tiempo</b>, pase lo que pase en el sistema.</td></tr>
+        <tr><td class="lab">γ<br><span style="color:var(--ink-soft)">ganancia parasitaria</span></td><td>Las activas ganan <b>a costa de</b> las inactivas del mismo source-set.</td><td>El valor total del source-set es <b>constante</b>. Sólo cambia su reparto.</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:24px">El γ gana por goleada, y no por capricho. En α y β, los valores netos no dejan de crecer, y esos números grandes <b>amplifican diferencias estadísticas minúsculas</b>: el sistema se vuelve inestable y poco fiable. En γ, como la suma está fija, el sistema sólo puede aprender <em>redistribuyendo</em>. Además, en γ da lo mismo usar el criterio μ o el Σ: rinden idéntico.</p>
+  </div>
+</section>
+
+<!-- 7 -->
+<section id="s7">
+  <div class="col reveal">
+    <div class="eyebrow"><span class="glyph">Pa·Pc</span><span>Los dos números clave</span></div>
+    <h2>Cuántas se activan, y cuántas se repiten</h2>
+    <p>Para predecir el comportamiento del sistema bastan dos probabilidades:</p>
+    <div class="two" style="margin:22px 0">
+      <div class="card tight"><p class="cap">P<sub>a</sub></p><p style="margin:0">La proporción esperada de A-units que activa un estímulo de un tamaño dado. Es la «densidad de actividad» de la red.</p></div>
+      <div class="card tight"><p class="cap">P<sub>c</sub></p><p style="margin:0">Probabilidad <b>condicional</b>: si una A-unit respondió al estímulo S₁, ¿responderá también a S₂? Es la medida de <em>parecido</em> entre dos estímulos, tal como la ve la máquina.</p></div>
+    </div>
+    <p>Un detalle que Rosenblatt destaca: cuando el tamaño de la retina crece, el número de S-points deja rápidamente de importar. Las fórmulas se pueden escribir como si la retina tuviera infinitos puntos.</p>
+  </div>
+
+  <div class="card reveal">
+    <p class="cap">Figura 6 reconstruida · mueve los estímulos y mide P<sub>c</sub></p>
+    <div class="two" style="gap:28px;align-items:start">
+      <div>
+        <svg id="ovStage" viewBox="0 0 300 240" role="img" aria-label="Dos estímulos circulares que se solapan sobre una retina"></svg>
+        <div class="slider-row" style="margin-top:6px">
+          <span class="lbl">Solapamiento</span>
+          <input type="range" id="ovSlider" min="0" max="100" value="30">
+          <span class="val mono" id="ovVal">30%</span>
+        </div>
+        <div class="slider-row">
+          <span class="lbl">Umbral θ</span>
+          <input type="range" id="ovTheta" min="1" max="8" value="3">
+          <span class="val mono" id="ovThetaV">3</span>
+        </div>
+      </div>
+      <div>
+        <svg id="ovChart" viewBox="0 0 320 240" role="img" aria-label="Curva de Pc frente al solapamiento entre estímulos"></svg>
+        <div class="readouts">
+          <div class="ro"><div class="num mono" id="ovPa">—</div><div class="lbl">P<sub>a</sub></div></div>
+          <div class="ro"><div class="num mono" id="ovPc">—</div><div class="lbl">P<sub>c</sub></div></div>
+        </div>
+      </div>
+    </div>
+    <figcaption>Simulación real: 600 A-units con 10 orígenes excitatorios cada una, colocados al azar sobre la retina. P<sub>a</sub> y P<sub>c</sub> se miden contando, no se leen de una tabla.</figcaption>
+  </div>
+
+  <div class="col reveal">
+    <h3>Lo que hay que notar</h3>
+    <ul class="clean">
+      <li><span class="n">1</span><span>Con estímulos <b>completamente disjuntos</b> (0% de solapamiento) P<sub>c</sub> <em>no es cero</em>. Siempre queda un parecido residual: por azar, algunas unidades responden a ambos.</span></li>
+      <li><span class="n">2</span><span>Cuando los estímulos son idénticos, P<sub>c</sub> vale 1. Entre medias, la curva sube.</span></li>
+      <li><span class="n">3</span><span>Subir el <b>umbral</b> aplasta la curva: reduce P<sub>a</sub> un poco y P<sub>c</sub> <b>mucho más</b>. Con θ alto, sólo estímulos casi idénticos comparten unidades — justo lo que se necesita para discriminar bien.</span></li>
+      <li><span class="n">4</span><span>Si la excitación y la inhibición están equilibradas, la curva de P<sub>a</sub> frente al área iluminada se <b>aplana</b>: el sistema deja de ser sensible al tamaño del estímulo. Muy útil, porque muchos diseños necesitan que P<sub>a</sub> se quede cerca de su valor óptimo.</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 8 -->
+<section id="s8">
+  <div class="col reveal">
+    <div class="eyebrow"><span class="glyph">Pr·Pg</span><span>El experimento</span></div>
+    <h2>Recordar no es generalizar</h2>
+    <p>Rosenblatt distingue dos experimentos, y la diferencia es el corazón del artículo.</p>
+    <div class="two" style="margin:22px 0">
+      <div class="card tight"><p class="cap">P<sub>r</sub> · respuesta correcta</p><p style="margin:0">Se entrena con una serie de estímulos, se «congela» el sistema y se le vuelven a presentar <b>exactamente los mismos</b>, en las mismas posiciones de la retina. ¿Prefiere la respuesta que se le reforzó?</p></div>
+      <div class="card tight"><p class="cap">P<sub>g</sub> · generalización correcta</p><p style="margin:0">Se entrena igual, pero se prueba con estímulos <b>nuevos</b>: de la misma clase, en posiciones, tamaños o rotaciones distintas. ¿Acierta la clase aunque nunca haya visto ese estímulo concreto?</p></div>
+    </div>
+    <p>Y ahora la parte que decide el destino de la máquina: <b>de qué entorno salen los estímulos</b>.</p>
+  </div>
+
+  <div class="two reveal">
+    <div class="card">
+      <p class="cap">Entorno «ideal»</p>
+      <p>Puntos de luz colocados al azar, sin ninguna estructura. Se le enseñan 1.000 manchas aleatorias y se decide arbitrariamente que las primeras 500 son «R₁» y las otras 500 «R₂».</p>
+      <p>Es ideal en el mismo sentido que un gas ideal en física: un artefacto cómodo para calcular, no una buena situación.</p>
+      <p style="margin-bottom:0"><b>Resultado:</b> P<sub>g</sub> nunca supera el azar (0,5). No hay <em>nada</em> que generalizar, porque las clases no significan nada. Y P<sub>r</sub> cae hacia el azar según se aprenden más estímulos: la memoria se satura.</p>
+    </div>
+    <div class="card">
+      <p class="cap">Entorno «diferenciado»</p>
+      <p>Hay clases distinguibles de verdad: cuadrados, círculos, triángulos, letras. Cada respuesta se asocia a una clase.</p>
+      <p>Ahora las curvas cambian por completo: aparece una <b>asíntota mejor que el azar</b>, y se puede acercar a 1 sin más que aumentar el número de A-units. Con unos pocos miles de células de asociación, los errores en un problema simple son despreciables.</p>
+      <p style="margin-bottom:0"><b>Y lo mejor:</b> P<sub>r</sub> y P<sub>g</sub> tienden a la <b>misma asíntota</b>. En el límite da igual si el perceptrón había visto antes ese estímulo o no.</p>
+    </div>
+  </div>
+
+  <div class="col reveal">
+    <h3>La condición para que haya generalización</h3>
+    <p>Todo depende de una desigualdad entre tres cantidades: el parecido medio <em>dentro</em> de una clase, el parecido medio <em>entre</em> clases distintas, y la densidad de activación.</p>
+    <p class="quote mono" style="font-size:18px">P<sub>c12</sub> &lt; P<sub>a</sub> &lt; P<sub>c11</sub></p>
+    <p>En castellano: los miembros de una misma clase deben compartir <b>más</b> unidades entre sí de lo que comparten con miembros de la otra clase, y P<sub>a</sub> tiene que caer justo en medio. Si eso no se cumple, no hay mejora sobre el azar y probablemente gane la respuesta equivocada. Rosenblatt sostiene que, para las formas geométricas simples que solemos considerar «parecidas», la desigualdad se puede cumplir eligiendo bien los parámetros del sistema.</p>
+  </div>
+</section>
+
+<!-- 9 -->
+<section id="s9">
+  <div class="col reveal">
+    <div class="eyebrow"><span class="glyph">±</span><span>Refuerzo</span></div>
+    <h2>Premio y castigo</h2>
+    <p>Hasta aquí, las unidades activas sólo podían <b>ganar</b> valor. En un <b>sistema bivalente</b> hay dos tipos de refuerzo: una unidad activa puede ganar o perder, según cómo estén las cosas en ese momento.</p>
+    <div class="card tight" style="margin:22px 0">
+      <p class="cap">La regla más eficiente</p>
+      <p style="margin:0 0 10px">Bajo <b>refuerzo positivo</b>: <span class="k exc">+ΔV</span> a las unidades activas del source-set de las respuestas «encendidas», y <span class="k inh">−ΔV</span> a las activas de las respuestas «apagadas».</p>
+      <p style="margin:0">Bajo <b>refuerzo negativo</b>: exactamente al revés.</p>
+    </div>
+    <p>Si ese refuerzo se controla desde fuera, se convierte literalmente en <b>recompensa y castigo</b>, y el perceptrón pasa a ser capaz de <b>aprendizaje por ensayo y error</b>: el experimentador ya no fuerza la respuesta correcta, sólo dice «bien» o «mal» después.</p>
+    <p>Un sistema bivalente además corrige un vicio de los anteriores: la preferencia por la respuesta equivocada sólo porque sus estímulos eran más grandes o más frecuentes.</p>
+
+    <h3>Respuestas en binario</h3>
+    <p>Si cada clase necesita su propia respuesta exclusiva, el rendimiento empeora conforme crece el número de respuestas. La solución: <b>codificar en bits</b>. En vez de 100 respuestas para 100 patrones, se buscan unos pocos rasgos que se puedan reconocer por separado —oscuro/claro, alto/bajo, recto/curvo— y cada uno se representa con un par de respuestas mutuamente excluyentes.</p>
+    <p class="quote">Con una buena tabla de características binarias, <b>siete pares de respuestas bastan para distinguir 100 clases</b> de estímulos.</p>
+    <p>El truco falla en un caso: si un estímulo sólo se puede identificar entero, sin rasgos analizables, entonces vuelve a hacer falta un bit por clase («perro» / «no perro») y no se ha ganado nada.</p>
+    <p>Rosenblatt no se queda en el papel: sistemas bivalentes como estos se <b>simularon en el IBM 704</b> del Cornell Aeronautical Laboratory, y los resultados confirmaron las predicciones principales de la teoría.</p>
+  </div>
+</section>
+
+<!-- 10 -->
+<section id="s10">
+  <div class="col reveal">
+    <div class="eyebrow"><span class="glyph">Σ</span><span>Laboratorio</span></div>
+    <h2>Entrena uno tú mismo</h2>
+    <p>Este es el problema exacto que Rosenblatt usó para calibrar la Figura 11 de su artículo: <b>distinguir cuadrados de círculos</b>. Las figuras aparecen en posiciones y tamaños al azar, así que memorizar no sirve: hay que generalizar.</p>
+    <p>El sistema de abajo es un perceptrón bivalente con 80 A-units de orígenes aleatorios y umbral fijo. Empieza con todos los valores a cero, es decir, adivinando.</p>
+  </div>
+
+  <div class="card reveal">
+    <p class="cap">Perceptrón bivalente · discriminación cuadrado / círculo</p>
+    <div class="two" style="gap:28px;align-items:start">
+      <div>
+        <div class="grid static" id="labGrid" style="grid-template-columns:repeat(12,1fr)" aria-label="Retina de 144 puntos mostrando el estímulo actual"></div>
+        <div class="fireboard" style="margin-top:16px">
+          <div class="lamp" id="lampSq" style="font-size:10px">CUADRADO</div>
+          <div class="lamp" id="lampCi" style="font-size:10px">CÍRCULO</div>
+          <div>
+            <div class="mono" id="labVerdict" style="font-size:14px">Sin estímulo</div>
+            <div class="mono" style="font-size:11.5px;color:var(--ink-soft);letter-spacing:.06em;margin-top:6px" id="labMargin">—</div>
+          </div>
+        </div>
+        <div class="controls">
+          <button id="labStep">Presentar 1</button>
+          <button id="labTrain" class="ghost">Entrenar 100</button>
+          <button id="labReset" class="ghost">Reiniciar</button>
+        </div>
+      </div>
+      <div>
+        <p class="cap" style="margin-bottom:8px">Curva de aprendizaje</p>
+        <svg id="labChart" viewBox="0 0 320 200" role="img" aria-label="Curva de generalización correcta frente al número de estímulos vistos"></svg>
+        <div class="readouts">
+          <div class="ro"><div class="num mono" id="labSeen">0</div><div class="lbl">estímulos vistos</div></div>
+          <div class="ro"><div class="num mono" id="labPg">50%</div><div class="lbl">P<sub>g</sub> · figuras nuevas</div></div>
+        </div>
+        <p class="cap" style="margin:22px 0 8px">Valores de las 80 A-units</p>
+        <svg id="labUnits" viewBox="0 0 320 70" role="img" aria-label="Valores actuales de las unidades de asociación"></svg>
+        <div style="display:flex;gap:18px;margin-top:8px">
+          <span class="pill"><span class="sw" style="background:var(--exc)"></span>vota cuadrado</span>
+          <span class="pill"><span class="sw" style="background:var(--resp)"></span>vota círculo</span>
+        </div>
+      </div>
+    </div>
+    <figcaption>Cada vez que el perceptrón se equivoca, las unidades que estaban activas ajustan su valor: <span class="k exc">+1</span> hacia la respuesta correcta, <span class="k inh">−1</span> hacia la incorrecta. Nadie le dice dónde mirar. P<sub>g</sub> se mide sobre 200 figuras que nunca ha visto.</figcaption>
+  </div>
+
+  <div class="col reveal">
+    <p><b>Qué observar mientras entrena.</b> Las primeras decenas de estímulos mueven mucho la curva; después se aplana en una asíntota por debajo del 100%. Esa asíntota es exactamente lo que predicen las ecuaciones del artículo, y para subirla no hay que cambiar la regla de aprendizaje: hay que <b>añadir más A-units</b>.</p>
+  </div>
+</section>
+
+<!-- 11 -->
+<section id="s11">
+  <div class="col reveal">
+    <div class="eyebrow"><span class="glyph">lim</span><span>Los límites</span></div>
+    <h2>Dónde se detiene el perceptrón</h2>
+    <p>Rosenblatt es notablemente honesto sobre esto, y merece la pena leerlo despacio porque es la parte que más se cita mal.</p>
+    <p>El sistema <b>sí</b> sirve para: reconocimiento de patrones, aprendizaje asociativo, y conjuntos cognitivos como la atención selectiva y el recuerdo selectivo. Con estímulos que dejan una huella temporal puede distinguir <b>velocidades y secuencias de sonidos</b>. Combinando entradas de audio e imagen se le pueden asociar «nombres» auditivos a objetos visuales, y obedecer órdenes como «di el color de este estímulo».</p>
+    <p>Puede incluso aprender respuestas que exigen varias condiciones simultáneas: <em>nombra el color si la figura está a la izquierda, y la forma si está a la derecha</em>. Eso todavía entra.</p>
+    <p class="quote">Lo que no entra son las <b>relaciones</b>: «nombra el objeto a la izquierda del cuadrado», «indica el patrón que apareció antes del círculo». Ahí el problema se vuelve excesivamente difícil.</p>
+    <p>El diagnóstico es preciso: <b>la separabilidad estadística no basta para la abstracción de orden superior</b>. Para eso hará falta un sistema más avanzado en principio, no sólo más grande. Rosenblatt llega a comparar la «conducta simbólica» del perceptrón con la de los pacientes con daño cerebral estudiados por Goldstein: responden bien a lo concreto, fallan en lo relacional.</p>
+
+    <h3>Dos hallazgos que suelen olvidarse</h3>
+    <ul class="clean">
+      <li><span class="n">↯</span><span><b>Memoria distribuida.</b> Cualquier asociación usa una proporción grande de las células. Si se destruye una parte del sistema de asociación, <em>ninguna</em> discriminación concreta se pierde de golpe: aparece un déficit general y suave en todas las asociaciones aprendidas.</span></li>
+      <li><span class="n">↺</span><span><b>Formación espontánea de conceptos.</b> Si se deja que los valores decaigan a un ritmo proporcional a su magnitud y se refuerza <em>todo</em> automáticamente, sin decirle nunca si acierta o falla, el sistema se estabiliza respondiendo «1» a una clase de estímulos y «0» a la otra. Separa las dos clases <b>sin supervisión</b>. Demostrado en simulación con el 704.</span></li>
+    </ul>
+  </div>
+</section>
+
+<!-- 12 -->
+<section id="s12">
+  <div class="col reveal">
+    <div class="eyebrow"><span class="glyph">→</span><span>Balance</span></div>
+    <h2>Seis números y una promesa</h2>
+    <p>La afirmación final del artículo es fuerte: para un modo de organización dado (α, β o γ; μ o Σ; monovalente o bivalente), el aprendizaje, la discriminación perceptiva y la generalización se pueden predecir <b>enteramente a partir de seis parámetros físicos</b>.</p>
+    <table style="margin-top:24px">
+      <tbody>
+        <tr><td class="lab" style="width:64px">x</td><td>conexiones excitatorias por A-unit</td></tr>
+        <tr><td class="lab">y</td><td>conexiones inhibitorias por A-unit</td></tr>
+        <tr><td class="lab">θ</td><td>umbral esperado de una A-unit</td></tr>
+        <tr><td class="lab">ω</td><td>proporción de unidades R a las que se conecta una A-unit</td></tr>
+        <tr><td class="lab">N<sub>A</sub></td><td>número de A-units del sistema</td></tr>
+        <tr><td class="lab">N<sub>R</sub></td><td>número de unidades de respuesta</td></tr>
+      </tbody>
+    </table>
+    <p style="margin-top:24px">Ninguno de los seis se mide observando la conducta: son cantidades físicas de la red, medibles por su cuenta. De ahí salen las tres virtudes que Rosenblatt reclama:</p>
+    <ul class="clean">
+      <li><span class="n">1</span><span><b>Parsimonia.</b> Sólo hay <em>un</em> constructo hipotético en toda la teoría: el valor V de una célula de asociación. Todo lo demás ya existe en física y biología.</span></li>
+      <li><span class="n">2</span><span><b>Verificabilidad.</b> Las teorías del aprendizaje de la época medían conducta para predecir conducta: en el fondo, ajuste de curvas. Y una curva bien ajustada es irrefutable —de ahí la pulla que Rosenblatt cita, atribuida a Kistiakowsky, sobre lo que se puede ajustar con siete parámetros—. Aquí, si la curva no encaja en una situación nueva, o la teoría o la medición están mal. La teoría <em>se puede romper</em>, y eso es una virtud.</span></li>
+      <li><span class="n">3</span><span><b>Generalidad sin perder precisión.</b> Al no depender de ningún organismo concreto, permitiría no sólo predecir conducta sino <b>sintetizar sistemas que se comporten</b> como uno quiera.</span></li>
+    </ul>
+    <p style="margin-top:26px">Sobre Hebb, cuyo trabajo reconoce como fuente de inspiración, el veredicto es cortés pero directo: Hebb sugirió qué <em>tipo</em> de sustrato orgánico podría sostener la conducta, pero nunca llegó a un modelo capaz de <b>predecirla</b>. El perceptrón, dice, es el primer puente terminado entre lo neurológico y lo psicológico, transitable en ambos sentidos. Cuánto aguanta ese puente, admite, está por ver.</p>
+  </div>
+</section>
+
+<!-- 13 -->
+<section id="s13">
+  <div class="col reveal">
+    <div class="eyebrow"><span class="glyph">1958</span><span>Contexto</span></div>
+    <h2>Qué queda de todo esto</h2>
+    <p>Merece la pena separar lo que el artículo dice de lo que la leyenda le atribuye.</p>
+    <p><b>Lo que era nuevo y sigue en pie:</b> aprender ajustando pesos numéricos en vez de programar reglas; unidades sencillas con umbral; una capa de rasgos aleatorios seguida de una capa que aprende; memoria repartida por toda la red y degradación suave ante el daño; la distinción entre acertar en lo visto y generalizar a lo nuevo; y la idea de que la «similitud» la define el sistema que percibe, no la geometría.</p>
+    <p><b>Lo que cambió después:</b> aquí las A-units son fijas y aleatorias — sólo aprende la última capa. La retropropagación, que permite entrenar también las capas intermedias, y el uso de unidades con respuesta continua en lugar de todo o nada, llegarían mucho más tarde y son lo que convierte esta arquitectura en las redes profundas actuales.</p>
+    <p><b>Y la limitación que él mismo señaló</b> —relaciones y abstracción de orden superior— resultó ser exactamente el frente donde se libró el debate durante las décadas siguientes.</p>
+  </div>
+</section>
+
+</main>
+
+<footer>
+  <div class="wrap col">
+    <p><b>Fuente:</b> F. Rosenblatt, «The perceptron: a probabilistic model for information storage and organization in the brain», <em>Psychological Review</em>, vol. 65, n.º 6, 1958, pp. 386–408. Recibido el 23 de abril de 1958. Trabajo realizado en el Cornell Aeronautical Laboratory bajo contrato con la Office of Naval Research.</p>
+    <p style="margin-bottom:22px"><a href="index.html">← Todas las explicaciones</a> &nbsp;·&nbsp; <a href="como-funciona-el-perceptron.html">Cómo funciona un perceptrón, en términos modernos →</a></p>
+    <p style="margin-bottom:0">Todas las figuras de esta página son simulaciones ejecutadas en tu navegador con los mecanismos descritos en el artículo; no son reproducciones de las figuras originales. Los números que verás varían en cada ejecución, igual que en el laboratorio.</p>
+  </div>
+</footer>
+
+<script>
+(function(){
+"use strict";
+const NS="http://www.w3.org/2000/svg";
+const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+/* ---------- utilidades ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296;};}
+function el(tag,attrs){const n=document.createElementNS(NS,tag);if(attrs)for(const k in attrs)n.setAttribute(k,attrs[k]);return n;}
+function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
+
+/* ---------- índice lateral ---------- */
+const secs=[...document.querySelectorAll("main section")];
+const titles=["Tres preguntas","Fotografía o cableado","Anatomía","Umbral θ","Dos fases","El valor V","Pa y Pc","Recordar / generalizar","Premio y castigo","Laboratorio","Los límites","Balance","1958 → hoy"];
+const railList=document.getElementById("railList");
+secs.forEach((s,i)=>{
+  const li=document.createElement("li");
+  const a=document.createElement("a");
+  a.href="#"+s.id; a.textContent=(i+1).toString().padStart(2,"0")+" · "+(titles[i]||"");
+  li.appendChild(a); railList.appendChild(li);
+});
+const links=[...railList.querySelectorAll("a")];
+const railFill=document.getElementById("railFill");
+const topbar=document.getElementById("topbar");
+function onScroll(){
+  const h=document.documentElement.scrollHeight-window.innerHeight;
+  const p=h>0?clamp(window.scrollY/h,0,1):0;
+  railFill.style.height=(p*100)+"%";
+  topbar.style.width=(p*100)+"%";
+  let cur=0;
+  secs.forEach((s,i)=>{ if(s.getBoundingClientRect().top<window.innerHeight*0.42) cur=i; });
+  links.forEach((a,i)=>a.classList.toggle("on",i===cur));
+}
+window.addEventListener("scroll",onScroll,{passive:true});
+window.addEventListener("resize",onScroll);
+
+/* ---------- reveal ---------- */
+const io=new IntersectionObserver(es=>{es.forEach(e=>{if(e.isIntersecting){e.target.classList.add("in");io.unobserve(e.target);}});},{threshold:.12});
+document.querySelectorAll(".reveal").forEach(n=>io.observe(n));
+
+/* ================================================================
+   RED: constructor de diagramas S → A → R
+   ================================================================ */
+function makeNet(svg,cfg){
+  svg.innerHTML="";
+  const W=900,H=300,rnd=mulberry32(cfg.seed);
+  const gL=el("g"),gN=el("g");
+  svg.appendChild(gL);svg.appendChild(gN);
+
+  // retina
+  const rx=95, rrx=52, rry=96;
+  const ret=el("ellipse",{cx:rx,cy:H/2,rx:rrx,ry:rry,fill:"none",stroke:"var(--rule)","stroke-width":1});
+  gN.appendChild(ret);
+  const dots=[];
+  for(let i=0;i<46;i++){
+    const a=rnd()*Math.PI*2,r=Math.sqrt(rnd())*0.9;
+    const x=rx+Math.cos(a)*r*rrx, y=H/2+Math.sin(a)*r*rry;
+    const c=el("circle",{cx:x.toFixed(1),cy:y.toFixed(1),r:2.6,fill:"var(--ink-soft)"});
+    gN.appendChild(c); dots.push({x,y,node:c});
+  }
+
+  // capas
+  const layers=[];
+  cfg.layers.forEach((spec,li)=>{
+    const x=spec.x, n=spec.n, nodes=[];
+    const span=Math.min(220,n*26);
+    for(let i=0;i<n;i++){
+      const y=H/2-span/2+(n===1?span/2:(i*span/(n-1)));
+      const c=el("circle",{cx:x,cy:y.toFixed(1),r:spec.r||9,fill:"var(--surface)",stroke:"var(--ink)","stroke-width":1.4});
+      gN.appendChild(c);
+      nodes.push({x,y,node:c,set:0});
+    }
+    const t=el("text",{x:x,y:H-12,"text-anchor":"middle",fill:"var(--ink-soft)","font-family":"IBM Plex Mono, monospace","font-size":11,"letter-spacing":"1.4"});
+    t.textContent=spec.label; gN.appendChild(t);
+    layers.push({nodes,label:t,spec});
+  });
+  const rlab=el("text",{x:rx,y:H-12,"text-anchor":"middle",fill:"var(--ink-soft)","font-family":"IBM Plex Mono, monospace","font-size":11,"letter-spacing":"1.4"});
+  rlab.textContent="RETINA (S)"; gN.appendChild(rlab);
+
+  // conexiones
+  const lines=[];
+  function connect(from,to,k,clustered){
+    to.forEach((t,ti)=>{
+      for(let j=0;j<k;j++){
+        let s;
+        if(clustered){
+          const centerIdx=Math.floor(rnd()*from.length);
+          const cand=from.slice().sort((a,b)=>Math.abs(a.y-from[centerIdx].y)-Math.abs(b.y-from[centerIdx].y));
+          s=cand[Math.floor(rnd()*Math.min(6,cand.length))];
+        } else s=from[Math.floor(rnd()*from.length)];
+        const p=el("path",{d:`M${s.x.toFixed(1)},${s.y.toFixed(1)} C${((s.x+t.x)/2).toFixed(1)},${s.y.toFixed(1)} ${((s.x+t.x)/2).toFixed(1)},${t.y.toFixed(1)} ${t.x},${t.y.toFixed(1)}`,
+          fill:"none",stroke:"var(--rule)","stroke-width":1});
+        gL.appendChild(p);
+        lines.push({p,from:s,to:t,ti});
+        (t.inputs=t.inputs||[]).push({src:s,line:p});
+      }
+    });
+  }
+  let prev=dots;
+  cfg.layers.forEach((spec,li)=>{
+    connect(prev,layers[li].nodes,spec.k,!!spec.clustered);
+    prev=layers[li].nodes;
+  });
+
+  return {svg,dots,layers,lines};
+}
+
+/* ---------- hero ---------- */
+const hero=makeNet(document.getElementById("heroNet"),{
+  seed:11,
+  layers:[
+    {x:330,n:9,k:3,label:"PROYECCIÓN (A I)",clustered:true},
+    {x:560,n:7,k:3,label:"ASOCIACIÓN (A II)"},
+    {x:790,n:3,k:4,r:13,label:"RESPUESTAS (R)"}
+  ]
+});
+if(!reduce){
+  // pulsos ambientales
+  let tick=0;
+  setInterval(()=>{
+    tick++;
+    hero.dots.forEach(d=>{ if(Math.random()<0.16){ d.node.setAttribute("fill","var(--exc)"); setTimeout(()=>d.node.setAttribute("fill","var(--ink-soft)"),700);} });
+    hero.layers[0].nodes.forEach(n=>{ if(Math.random()<0.4) flash(n.node,"var(--exc)",600); });
+    setTimeout(()=>hero.layers[1].nodes.forEach(n=>{ if(Math.random()<0.45) flash(n.node,"var(--exc)",600); }),260);
+    setTimeout(()=>{ const w=hero.layers[2].nodes[Math.floor(Math.random()*3)]; flash(w.node,"var(--resp)",900); },560);
+    hero.lines.forEach(l=>{ if(Math.random()<0.10){ l.p.classList.add("flow"); l.p.setAttribute("stroke","var(--exc)"); setTimeout(()=>{l.p.classList.remove("flow");l.p.setAttribute("stroke","var(--rule)");},900);} });
+  },1400);
+}
+function flash(node,color,ms){
+  node.setAttribute("fill",color);node.setAttribute("stroke",color);
+  setTimeout(()=>{node.setAttribute("fill","var(--surface)");node.setAttribute("stroke","var(--ink)");},ms);
+}
+
+/* ---------- anatomía (hover) ---------- */
+const anat=makeNet(document.getElementById("anatomyNet"),{
+  seed:5,
+  layers:[
+    {x:330,n:9,k:3,label:"PROYECCIÓN (A I)",clustered:true},
+    {x:560,n:7,k:3,label:"ASOCIACIÓN (A II)"},
+    {x:790,n:3,k:4,r:13,label:"RESPUESTAS (R)"}
+  ]
+});
+anat.layers.forEach((L,li)=>{
+  L.nodes.forEach(n=>{
+    n.node.style.cursor="pointer";
+    const enter=()=>{
+      anat.lines.forEach(l=>{ const rel=(l.to===n)||(l.from===n); l.p.setAttribute("stroke",rel?"var(--exc)":"var(--rule)"); l.p.setAttribute("stroke-width",rel?1.8:1); });
+      n.node.setAttribute("fill","var(--exc)");
+    };
+    const leave=()=>{
+      anat.lines.forEach(l=>{l.p.setAttribute("stroke","var(--rule)");l.p.setAttribute("stroke-width",1);});
+      n.node.setAttribute("fill","var(--surface)");
+    };
+    n.node.addEventListener("mouseenter",enter);
+    n.node.addEventListener("mouseleave",leave);
+    n.node.addEventListener("touchstart",e=>{enter();},{passive:true});
+    n.node.addEventListener("touchend",leave);
+  });
+});
+
+/* ================================================================
+   4 · UNIDAD DE ASOCIACIÓN CON UMBRAL
+   ================================================================ */
+(function(){
+  const N=36, grid=document.getElementById("unitGrid");
+  let lit=new Array(N).fill(false), origins=[];
+  const cells=[];
+  for(let i=0;i<N;i++){
+    const d=document.createElement("div");
+    d.className="cell"; d.setAttribute("role","button"); d.setAttribute("tabindex","0");
+    d.setAttribute("aria-label","punto sensorial "+(i+1));
+    const m=document.createElement("span"); m.className="mark"; d.appendChild(m);
+    d.addEventListener("click",()=>{lit[i]=!lit[i];render();});
+    d.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();lit[i]=!lit[i];render();}});
+    grid.appendChild(d); cells.push({d,m});
+  }
+  function rewire(){
+    const idx=[...Array(N).keys()]; 
+    for(let i=idx.length-1;i>0;i--){const j=Math.floor(Math.random()*(i+1));[idx[i],idx[j]]=[idx[j],idx[i]];}
+    origins=idx.slice(0,8).map((k,n)=>({i:k,exc:n<5}));
+  }
+  const th=document.getElementById("unitTheta"),thV=document.getElementById("unitThetaV");
+  const barE=document.getElementById("barE"),barI=document.getElementById("barI"),barA=document.getElementById("barA");
+  const thline=document.getElementById("unitTh"), lamp=document.getElementById("unitLamp"), eq=document.getElementById("unitEq");
+  const H=120, UNIT=22; // px por unidad de valor
+  function render(){
+    cells.forEach((c,i)=>{
+      c.d.className="cell"+(lit[i]?" lit":"");
+      c.m.textContent="";
+      const o=origins.find(o=>o.i===i);
+      if(o){ c.d.classList.add(o.exc?"o-exc":"o-inh"); c.m.textContent=o.exc?"+":"−"; }
+    });
+    let e=0,i2=0;
+    origins.forEach(o=>{ if(lit[o.i]){ o.exc?e++:i2++; } });
+    const a=e-i2, T=+th.value;
+    thV.textContent=T;
+    barE.style.height=(e*UNIT)+"px";
+    barI.style.height=(i2*UNIT)+"px";
+    barA.style.height=(Math.max(0,a)*UNIT)+"px";
+    thline.style.bottom=(T*UNIT)+"px";
+    const fires=a>=T;
+    lamp.classList.toggle("on",fires);
+    lamp.textContent=fires?"DISPARA":"OFF";
+    eq.innerHTML="e − i = "+a+" &nbsp;"+(fires?"≥":"&lt;")+"&nbsp; θ = "+T;
+  }
+  document.getElementById("unitRand").addEventListener("click",()=>{lit=lit.map(()=>Math.random()<0.35);render();});
+  document.getElementById("unitClear").addEventListener("click",()=>{lit=lit.map(()=>false);render();});
+  document.getElementById("unitRewire").addEventListener("click",()=>{rewire();render();});
+  th.addEventListener("input",render);
+  rewire(); lit[7]=lit[8]=lit[13]=lit[14]=true; render();
+})();
+
+/* ================================================================
+   5 · FASES
+   ================================================================ */
+(function(){
+  const net=makeNet(document.getElementById("phaseNet"),{
+    seed:23,
+    layers:[
+      {x:430,n:12,k:3,label:"UNIDADES DE ASOCIACIÓN (A)"},
+      {x:760,n:2,k:6,r:15,label:"RESPUESTAS"}
+    ]
+  });
+  const A=net.layers[0].nodes, R=net.layers[1].nodes;
+  A.forEach((n,i)=>n.set=i%2); // source-sets disjuntos
+  const cap=document.getElementById("phaseCaption");
+  let phase=0, active=[];
+  function reset(){
+    net.dots.forEach(d=>d.node.setAttribute("fill","var(--ink-soft)"));
+    A.forEach(n=>{n.node.setAttribute("fill","var(--surface)");n.node.setAttribute("stroke","var(--ink)");n.node.setAttribute("opacity",1);});
+    R.forEach(n=>{n.node.setAttribute("fill","var(--surface)");n.node.setAttribute("stroke","var(--ink)");n.node.setAttribute("opacity",1);});
+    net.lines.forEach(l=>{l.p.setAttribute("stroke","var(--rule)");l.p.setAttribute("opacity",1);l.p.classList.remove("flow");});
+  }
+  function stimulus(){
+    reset();
+    net.dots.forEach(d=>{ if(Math.random()<0.3) d.node.setAttribute("fill","var(--ink)"); });
+    active=A.map(()=>Math.random()<0.5);
+    phase=1; paint();
+  }
+  function paint(){
+    if(phase===1){
+      cap.innerHTML="<b>Fase predominante</b> — muchas A-units activas, las R todavía calladas";
+      A.forEach((n,i)=>{ if(active[i]){n.node.setAttribute("fill","var(--exc)");n.node.setAttribute("stroke","var(--exc)");} });
+      if(!reduce) net.lines.forEach(l=>{ if(l.to.x===430 && active[A.indexOf(l.to)]) l.p.classList.add("flow"); });
+    } else {
+      let c0=0,c1=0; A.forEach((n,i)=>{ if(active[i]) (n.set===0?c0++:c1++); });
+      const win=c0>=c1?0:1;
+      cap.innerHTML="<b>Fase postdominante</b> — gana R"+(win+1)+" ("+(win===0?c0:c1)+" unidades activas frente a "+(win===0?c1:c0)+") e inhibe el resto";
+      A.forEach((n,i)=>{
+        if(n.set===win){ n.node.setAttribute("fill",active[i]?"var(--exc)":"var(--surface)"); n.node.setAttribute("stroke",active[i]?"var(--exc)":"var(--ink)"); n.node.setAttribute("opacity",1); }
+        else { n.node.setAttribute("fill","var(--surface)"); n.node.setAttribute("stroke","var(--inh)"); n.node.setAttribute("opacity",.32); }
+      });
+      R.forEach((n,i)=>{
+        if(i===win){n.node.setAttribute("fill","var(--resp)");n.node.setAttribute("stroke","var(--resp)");}
+        else n.node.setAttribute("opacity",.3);
+      });
+      net.lines.forEach(l=>{
+        l.p.classList.remove("flow");
+        const t=l.to;
+        if(t.x===430 && t.set!==win) l.p.setAttribute("opacity",.2);
+        if(t.x===760){ const idx=R.indexOf(t); if(idx!==win) l.p.setAttribute("opacity",.15); else if(active[A.indexOf(l.from)]) l.p.setAttribute("stroke","var(--resp)"); }
+      });
+    }
+  }
+  document.getElementById("phaseStep").addEventListener("click",()=>{ if(phase===1){phase=2;paint();} else stimulus(); });
+  stimulus();
+  if(!reduce) setInterval(()=>{ if(phase===1){phase=2;paint();} else stimulus(); },2600);
+})();
+
+/* ================================================================
+   6 · SISTEMAS α β γ
+   ================================================================ */
+(function(){
+  const host=document.getElementById("vsys");
+  const names=[["α","ganancia sin compensar"],["β","alimentación constante"],["γ","ganancia parasitaria"]];
+  const NB=6, panels=[];
+  names.forEach(([g,sub])=>{
+    const d=document.createElement("div"); d.className="card tight"; d.style.margin="0";
+    d.innerHTML='<p class="cap" style="margin-bottom:6px"><b style="font-size:15px;color:var(--ink)">'+g+'</b> · '+sub+'</p>';
+    const svg=el("svg",{viewBox:"0 0 200 130"}); svg.style.width="100%"; svg.style.height="auto";
+    d.appendChild(svg);
+    const tot=document.createElement("div"); tot.className="mono"; tot.style.cssText="font-size:11.5px;letter-spacing:.06em;color:var(--ink-soft);margin-top:6px";
+    d.appendChild(tot); host.appendChild(d);
+    const bars=[];
+    for(let i=0;i<NB;i++){
+      const r=el("rect",{x:12+i*30,y:110,width:20,height:0,fill:"var(--rule)"});
+      svg.appendChild(r); bars.push(r);
+    }
+    svg.appendChild(el("line",{x1:6,y1:112,x2:194,y2:112,stroke:"var(--ink)","stroke-width":1}));
+    panels.push({svg,bars,tot,g});
+  });
+  let V=[[],[],[]], t=0, running=true;
+  function reset(){ V=[0,1,2].map(()=>new Array(NB).fill(4)); t=0; draw([]); }
+  function step(){
+    t++;
+    const act=[]; for(let i=0;i<NB;i++) act.push(Math.random()<0.45);
+    const nAct=act.filter(Boolean).length||1;
+    // alpha
+    for(let i=0;i<NB;i++) if(act[i]) V[0][i]+=1.2;
+    // beta: K fijo repartido
+    for(let i=0;i<NB;i++) if(act[i]) V[1][i]+=3.6/nAct;
+    // gamma: activos ganan a costa de inactivos
+    const nIn=NB-nAct;
+    for(let i=0;i<NB;i++){ if(act[i]) V[2][i]+=1.2; else if(nIn>0) V[2][i]-=1.2*nAct/nIn; }
+    for(let i=0;i<NB;i++) V[2][i]=Math.max(0.2,V[2][i]);
+    draw(act);
+    if(t>26) reset();
+  }
+  function draw(act){
+    panels.forEach((p,pi)=>{
+      const max=Math.max(12,...V[pi]);
+      p.bars.forEach((b,i)=>{
+        const h=Math.max(1,V[pi][i]/max*96);
+        b.setAttribute("height",h.toFixed(1)); b.setAttribute("y",(112-h).toFixed(1));
+        b.setAttribute("fill",act&&act[i]?"var(--exc)":"var(--rule)");
+      });
+      const sum=V[pi].reduce((a,b)=>a+b,0);
+      p.tot.textContent="valor total del source-set: "+sum.toFixed(1);
+    });
+  }
+  reset();
+  let timer=null;
+  function run(){ if(timer)clearInterval(timer); timer=setInterval(step,620); }
+  if(!reduce) run(); else { for(let i=0;i<8;i++) step(); }
+  document.getElementById("vsysRun").addEventListener("click",e=>{
+    running=!running;
+    if(running){run();e.target.textContent="Pausar";} else {clearInterval(timer);timer=null;e.target.textContent="Continuar";}
+  });
+  document.getElementById("vsysReset").addEventListener("click",reset);
+})();
+
+/* ================================================================
+   7 · Pa y Pc CON SOLAPAMIENTO
+   ================================================================ */
+(function(){
+  const G=24, N=G*G, NU=600, X=10;
+  const rnd=mulberry32(99);
+  let units=[];
+  for(let u=0;u<NU;u++){ const o=[]; for(let k=0;k<X;k++) o.push(Math.floor(rnd()*N)); units.push(o); }
+  const R=6.6, cy=G/2-0.5, cx1=G/2-0.5-R*0.55;
+  function disk(cx,cy,r){ const s=new Uint8Array(N); for(let y=0;y<G;y++)for(let x=0;x<G;x++){ const dx=x-cx,dy=y-cy; if(dx*dx+dy*dy<=r*r) s[y*G+x]=1; } return s; }
+  function measure(c){
+    const d=(1-c)*2*R;
+    const S1=disk(cx1,cy,R), S2=disk(cx1+d,cy,R);
+    let fire1=0, both=0;
+    const th=+document.getElementById("ovTheta").value;
+    for(let u=0;u<NU;u++){
+      let a=0,b=0; const o=units[u];
+      for(let k=0;k<X;k++){ if(S1[o[k]])a++; if(S2[o[k]])b++; }
+      if(a>=th){ fire1++; if(b>=th) both++; }
+    }
+    let inter=0,tot=0; for(let i=0;i<N;i++){ if(S1[i]){tot++; if(S2[i])inter++;} }
+    return {Pa:fire1/NU, Pc:fire1?both/fire1:0, S1,S2, real:tot?inter/tot:0};
+  }
+  const stage=document.getElementById("ovStage"), chart=document.getElementById("ovChart");
+  const cell=9, ox=(300-G*cell)/2, oy=(240-G*cell)/2;
+  function drawStage(m){
+    stage.innerHTML="";
+    for(let y=0;y<G;y++)for(let x=0;x<G;x++){
+      const i=y*G+x, a=m.S1[i], b=m.S2[i];
+      let f="var(--surface-2)";
+      if(a&&b) f="var(--ink)"; else if(a) f="var(--exc)"; else if(b) f="var(--inh)";
+      stage.appendChild(el("rect",{x:ox+x*cell,y:oy+y*cell,width:cell-1.4,height:cell-1.4,fill:f,rx:1}));
+    }
+    const lg=el("text",{x:ox,y:oy-8,fill:"var(--ink-soft)","font-family":"IBM Plex Mono, monospace","font-size":10});
+    lg.textContent="S1 naranja · S2 verde · común negro";
+    stage.appendChild(lg);
+  }
+  function drawChart(curve,cur){
+    chart.innerHTML="";
+    const L=44,Rr=308,T=16,B=200;
+    for(let i=0;i<=5;i++){
+      const y=B-(B-T)*i/5;
+      chart.appendChild(el("line",{x1:L,y1:y,x2:Rr,y2:y,stroke:"var(--rule)","stroke-width":.7,"stroke-dasharray":i?"2 4":""}));
+      const t=el("text",{x:L-8,y:y+4,"text-anchor":"end",fill:"var(--ink-soft)","font-family":"IBM Plex Mono, monospace","font-size":9});
+      t.textContent=(i/5).toFixed(1); chart.appendChild(t);
+    }
+    const pts=curve.map((v,i)=>[L+(Rr-L)*i/(curve.length-1),B-(B-T)*v]);
+    chart.appendChild(el("polyline",{points:pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" "),fill:"none",stroke:"var(--exc)","stroke-width":2}));
+    const cxp=L+(Rr-L)*cur.c, cyp=B-(B-T)*cur.pc;
+    chart.appendChild(el("line",{x1:cxp,y1:T,x2:cxp,y2:B,stroke:"var(--ink)","stroke-width":.8,"stroke-dasharray":"3 3"}));
+    chart.appendChild(el("circle",{cx:cxp,cy:cyp,r:5,fill:"var(--ink)"}));
+    const xl=el("text",{x:(L+Rr)/2,y:228,"text-anchor":"middle",fill:"var(--ink-soft)","font-family":"IBM Plex Mono, monospace","font-size":10});
+    xl.textContent="SOLAPAMIENTO ENTRE S1 Y S2  →"; chart.appendChild(xl);
+    const yl=el("text",{x:14,y:112,fill:"var(--ink-soft)","font-family":"IBM Plex Mono, monospace","font-size":10,transform:"rotate(-90 14 112)","text-anchor":"middle"});
+    yl.textContent="Pc"; chart.appendChild(yl);
+  }
+  let curve=[];
+  function rebuild(){ curve=[]; for(let i=0;i<=20;i++) curve.push(measure(i/20).Pc); }
+  function update(){
+    const c=+document.getElementById("ovSlider").value/100;
+    const m=measure(c);
+    document.getElementById("ovVal").textContent=Math.round(m.real*100)+"%";
+    document.getElementById("ovPa").textContent=m.Pa.toFixed(2);
+    document.getElementById("ovPc").textContent=m.Pc.toFixed(2);
+    drawStage(m); drawChart(curve,{c,pc:m.Pc});
+  }
+  document.getElementById("ovSlider").addEventListener("input",update);
+  document.getElementById("ovTheta").addEventListener("input",e=>{
+    document.getElementById("ovThetaV").textContent=e.target.value; rebuild(); update();
+  });
+  rebuild(); update();
+})();
+
+/* ================================================================
+   10 · LABORATORIO: cuadrado vs círculo
+   ================================================================ */
+(function(){
+  const G=12, N=G*G, NU=80, XE=6, XI=3, TH=1;
+  let units=[], w=[], seen=0, hist=[], busy=false;
+  const grid=document.getElementById("labGrid"), cells=[];
+  for(let i=0;i<N;i++){ const d=document.createElement("div"); d.className="cell"; grid.appendChild(d); cells.push(d); }
+
+  function build(){
+    units=[]; w=new Array(NU).fill(0); seen=0; hist=[{n:0,pg:0.5}];
+    for(let u=0;u<NU;u++){
+      const e=[],i=[];
+      for(let k=0;k<XE;k++) e.push(Math.floor(Math.random()*N));
+      for(let k=0;k<XI;k++) i.push(Math.floor(Math.random()*N));
+      units.push({e,i});
+    }
+  }
+  function shape(){
+    const isSq=Math.random()<0.5;
+    const s=new Uint8Array(N);
+    const r=1.8+Math.random()*1.7;
+    const cx=r+0.5+Math.random()*(G-2*r-1), cy=r+0.5+Math.random()*(G-2*r-1);
+    for(let y=0;y<G;y++)for(let x=0;x<G;x++){
+      const dx=x-cx, dy=y-cy;
+      const on = isSq ? (Math.abs(dx)<=r && Math.abs(dy)<=r) : (dx*dx+dy*dy<=r*r);
+      if(on) s[y*G+x]=1;
+    }
+    return {s,t:isSq?1:-1};
+  }
+  function activate(s){
+    const a=new Array(NU);
+    for(let u=0;u<NU;u++){
+      let e=0,i=0; const U=units[u];
+      for(let k=0;k<XE;k++) if(s[U.e[k]])e++;
+      for(let k=0;k<XI;k++) if(s[U.i[k]])i++;
+      a[u]=(e-i)>=TH;
+    }
+    return a;
+  }
+  function net(a){ let v=0; for(let u=0;u<NU;u++) if(a[u]) v+=w[u]; return v; }
+  function testPg(n){
+    let ok=0;
+    for(let k=0;k<n;k++){ const st=shape(); const v=net(activate(st.s)); const p=v>0?1:(v<0?-1:0); if(p===st.t) ok++; else if(p===0) ok+=0.5; }
+    return ok/n;
+  }
+  function drawStim(s){ for(let i=0;i<N;i++) cells[i].className="cell"+(s[i]?" lit":""); }
+  const unitsSvg=document.getElementById("labUnits");
+  function drawUnits(active){
+    unitsSvg.innerHTML="";
+    const max=Math.max(3,...w.map(Math.abs));
+    for(let u=0;u<NU;u++){
+      const x=6+(u%40)*7.8, y=u<40?10:44;
+      const h=Math.max(2,Math.abs(w[u])/max*24);
+      const fill=w[u]>0?"var(--exc)":(w[u]<0?"var(--resp)":"var(--rule)");
+      unitsSvg.appendChild(el("rect",{x:x,y:(w[u]>=0?y+24-h:y+24),width:5.6,height:h,fill:fill,opacity:(active&&active[u])?1:.42}));
+      unitsSvg.appendChild(el("line",{x1:x,y1:y+24,x2:x+5.6,y2:y+24,stroke:"var(--rule)","stroke-width":.6}));
+    }
+  }
+  const chart=document.getElementById("labChart");
+  function drawChart(){
+    chart.innerHTML="";
+    const L=40,Rr=308,T=14,B=166;
+    [0,.25,.5,.75,1].forEach(v=>{
+      const y=B-(B-T)*v;
+      chart.appendChild(el("line",{x1:L,y1:y,x2:Rr,y2:y,stroke:"var(--rule)","stroke-width":.7,"stroke-dasharray":v===0.5?"":"2 4"}));
+      const t=el("text",{x:L-7,y:y+4,"text-anchor":"end",fill:"var(--ink-soft)","font-family":"IBM Plex Mono, monospace","font-size":9});
+      t.textContent=Math.round(v*100)+"%"; chart.appendChild(t);
+    });
+    const az=el("text",{x:Rr,y:B-(B-T)*0.5-5,"text-anchor":"end",fill:"var(--ink-soft)","font-family":"IBM Plex Mono, monospace","font-size":9});
+    az.textContent="AZAR"; chart.appendChild(az);
+    const maxN=Math.max(100,seen);
+    const pts=hist.map(h=>[L+(Rr-L)*(h.n/maxN),B-(B-T)*h.pg]);
+    if(pts.length>1) chart.appendChild(el("polyline",{points:pts.map(p=>p[0].toFixed(1)+","+p[1].toFixed(1)).join(" "),fill:"none",stroke:"var(--exc)","stroke-width":2,"stroke-linejoin":"round"}));
+    if(pts.length) chart.appendChild(el("circle",{cx:pts[pts.length-1][0],cy:pts[pts.length-1][1],r:4,fill:"var(--ink)"}));
+    const xl=el("text",{x:(L+Rr)/2,y:192,"text-anchor":"middle",fill:"var(--ink-soft)","font-family":"IBM Plex Mono, monospace","font-size":10});
+    xl.textContent="ESTÍMULOS DE ENTRENAMIENTO  →"; chart.appendChild(xl);
+  }
+  const lampSq=document.getElementById("lampSq"), lampCi=document.getElementById("lampCi");
+  const verdict=document.getElementById("labVerdict"), margin=document.getElementById("labMargin");
+
+  function present(learn){
+    const st=shape(); const a=activate(st.s); const v=net(a);
+    const p=v>0?1:(v<0?-1:0);
+    drawStim(st.s);
+    lampSq.classList.toggle("on",p===1);
+    lampCi.classList.toggle("on",p===-1);
+    const ok=p===st.t;
+    verdict.innerHTML=(p===0?"Empate técnico":(p===1?"Dice: CUADRADO":"Dice: CÍRCULO"))+" · <b style='color:"+(ok?"var(--inh)":"var(--exc)")+"'>"+(ok?"correcto":"error")+"</b>";
+    margin.textContent="valor neto = "+v.toFixed(0)+"  ·  real: "+(st.t===1?"cuadrado":"círculo");
+    if(learn && !ok){ for(let u=0;u<NU;u++) if(a[u]) w[u]+=st.t; }
+    if(learn){ seen++; if(seen%10===0||seen===1){ hist.push({n:seen,pg:testPg(200)}); } }
+    drawUnits(a);
+    document.getElementById("labSeen").textContent=seen;
+    const pg=hist[hist.length-1].pg;
+    document.getElementById("labPg").textContent=Math.round(pg*100)+"%";
+    drawChart();
+  }
+  function reset(){
+    build(); drawUnits(null); drawChart();
+    for(let i=0;i<N;i++) cells[i].className="cell";
+    lampSq.classList.remove("on"); lampCi.classList.remove("on");
+    verdict.textContent="Sin estímulo"; margin.textContent="todos los valores a cero";
+    document.getElementById("labSeen").textContent="0";
+    document.getElementById("labPg").textContent="50%";
+  }
+  document.getElementById("labStep").addEventListener("click",()=>{ if(!busy) present(true); });
+  document.getElementById("labReset").addEventListener("click",()=>{ if(!busy) reset(); });
+  document.getElementById("labTrain").addEventListener("click",e=>{
+    if(busy) return; busy=true; const btn=e.target; btn.textContent="Entrenando…";
+    let k=0;
+    const iv=setInterval(()=>{
+      present(true); k++;
+      if(k>=100){ clearInterval(iv); busy=false; btn.textContent="Entrenar 100"; }
+    }, reduce?1:26);
+  });
+  reset();
+})();
+
+onScroll();
+})();
+</script>
+</body>
+</html>
