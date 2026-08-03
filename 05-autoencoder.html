@@ -1,0 +1,322 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Autoencoders y U-Net</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap');
+:root{
+  --ink:#10202c; --paper:#edefea; --card:#fff; --line:#d6dbd4; --muted:#5d6b72;
+  --amber:#c8760a; --teal:#0f8f82; --indigo:#3f4fbf; --violet:#7a55c7; --red:#ad3a2c;
+  --disp:'Space Grotesk','Segoe UI',sans-serif;
+  --body:'IBM Plex Sans','Segoe UI',Arial,sans-serif;
+  --mono:'IBM Plex Mono','Consolas',monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 var(--body)}
+.wrap{max-width:1060px;margin:0 auto;padding:0 22px 70px}
+a{color:var(--indigo)}
+
+/* ---- cabecera ---- */
+header.top{background:var(--ink);color:#e9eef0;margin-bottom:34px}
+header.top .wrap{padding-top:30px;padding-bottom:34px}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+header.top h1{font:700 clamp(2.1rem,5.4vw,3.5rem)/1.03 var(--disp);margin:14px 0 0;letter-spacing:-.02em}
+header.top .lead{max-width:640px;color:#b9c6cc;margin:14px 0 0;font-size:1.06rem}
+.backlink{display:inline-block;margin-top:24px;font:400 13px/1 var(--mono);color:#8fa3ac;text-decoration:none;border-bottom:1px solid #33475280;padding-bottom:3px}
+.backlink:hover{color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:20px}
+.chip{font:600 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;background:#1d3242;color:#9fc6cd;border-radius:4px;padding:6px 9px}
+
+/* ---- secciones ---- */
+section{margin-top:44px}
+h2{font:700 1.55rem/1.15 var(--disp);margin:0 0 6px;letter-spacing:-.01em}
+h2 .num{font:600 12px/1 var(--mono);color:var(--amber);display:block;letter-spacing:.16em;margin-bottom:9px}
+h3{font:600 1.02rem/1.3 var(--disp);margin:0 0 6px}
+p{margin:10px 0}
+.sub{color:var(--muted);max-width:700px}
+ul{padding-left:18px;margin:8px 0}
+li{margin:5px 0}
+.small{font-size:.88rem;color:var(--muted)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:820px){.g2,.g3{grid-template-columns:1fr}}
+.tick{border-top:4px solid var(--teal)}
+.cross{border-top:4px solid var(--red)}
+.tag{display:inline-block;font:600 11px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;padding:5px 8px;border-radius:4px;background:#e4e9e2;color:#41525a}
+.tag.a{background:#f7ead6;color:#8a5106}.tag.t{background:#dff0ed;color:#0a6960}
+.tag.i{background:#e4e6f8;color:#2f3c96}.tag.v{background:#eee5f8;color:#5b3b98}
+
+.note{border-left:4px solid var(--amber);background:#faf3e8;border-radius:0 10px 10px 0;padding:13px 16px;margin:16px 0}
+.note.t{border-color:var(--teal);background:#e9f5f3}
+.note.r{border-color:var(--red);background:#f9ecea}
+.note strong{font-family:var(--disp)}
+
+table{width:100%;border-collapse:collapse;font-size:.92rem;background:var(--card)}
+th,td{text-align:left;vertical-align:top;padding:11px 12px;border-bottom:1px solid var(--line)}
+th{font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#41525a;background:#e6eae4}
+td code,code{font:600 .88em var(--mono);background:#e6eae4;border-radius:4px;padding:2px 5px}
+.tablebox{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+
+/* ---- consola oscura (elemento firma) ---- */
+.console{background:var(--ink);color:#e9eef0;border-radius:18px;padding:24px;margin-top:16px}
+.console h3{color:#fff;font-size:1.1rem}
+.console .small,.console .sub{color:#93a6ae}
+.console label{display:block;font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#8fa3ac;margin-bottom:7px}
+.controls{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin:18px 0}
+.controls>div{flex:1 1 150px}
+select,input[type=range]{width:100%}
+select{font:400 14px var(--body);padding:8px;border-radius:8px;border:1px solid #33475f;background:#1a2c3a;color:#e9eef0}
+input[type=range]{accent-color:var(--amber);height:26px}
+.btn{font:600 13px var(--body);border:none;border-radius:8px;padding:10px 15px;cursor:pointer;background:var(--amber);color:#12202b}
+.btn:hover{background:#e08b17}
+.btn.ghost{background:transparent;color:#c6d4da;border:1px solid #37505f}
+.btn.ghost:hover{background:#1c2f3d}
+.btn:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.readout{font:400 13px/1.55 var(--mono);background:#0a161f;border:1px solid #23394a;border-radius:10px;padding:12px 14px;margin-top:14px;color:#c7d6dd;min-height:44px}
+.readout b{color:var(--amber);font-weight:600}
+.pill{font:600 11px var(--mono);color:#0a161f;background:#7fd6cb;border-radius:4px;padding:3px 6px}
+
+/* ---- rejillas numéricas (CNN) ---- */
+.cellgrid{display:inline-grid;gap:2px}
+.cell{width:34px;height:30px;display:grid;place-items:center;font:400 11px var(--mono);border-radius:3px;background:#22384a;color:#cfe0e7}
+.cell.win{outline:2px solid var(--amber);z-index:2}
+.cell.cur{background:var(--amber);color:#12202b;font-weight:600}
+.cell.empty{background:#16242f;color:#3d5361}
+@media(max-width:560px){.cell{width:27px;height:25px;font-size:10px}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font:400 12px var(--mono);color:#8fa3ac;margin-top:12px}
+
+/* ---- pie ---- */
+footer{border-top:1px solid var(--line);margin-top:56px;padding-top:20px;color:var(--muted);font-size:.86rem}
+.serie{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:14px}
+@media(max-width:820px){.serie{grid-template-columns:1fr}}
+.serie a{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;text-decoration:none;color:var(--ink)}
+.serie a:hover{border-color:var(--amber)}
+.serie a span{display:block;font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:4px}
+.serie a em{font-style:normal;color:var(--muted);font-size:.86rem}
+.serie a.soon{opacity:.55;pointer-events:none}
+.serie a.soon span{color:var(--muted)}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+@media print{header.top{background:#fff;color:#000}.console{background:#fff;color:#000;border:1px solid #999}.cell{background:#eee;color:#000}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+<p class="eyebrow">Serie IA para energías renovables · Guía 05</p>
+<h1>Autoencoders y U-Net</h1>
+<p class="lead">Comprimir hasta que solo quepa lo esencial, reconstruir, y usar lo que se perdió como alarma.</p>
+<div class="chips"><span class="chip">Detección de anomalías</span><span class="chip">Sin etiquetas de falla</span><span class="chip">Segmentación</span></div>
+<a class="backlink" href="00-indice.html">&larr; Volver al índice de la serie</a>
+</div></header>
+<div class="wrap">
+
+<section>
+<h2><span class="num">01 · La idea</span>Destruir la imagen y volver a construirla</h2>
+<p class="sub">Un autoencoder es una red con forma de reloj de arena. La primera mitad comprime la entrada hasta un cuello de botella muy estrecho. La segunda intenta reconstruir la entrada original a partir de ese resumen mínimo.</p>
+<div class="grid g3" style="margin-top:14px">
+<div class="card"><span class="tag a">Encoder</span><h3 style="margin-top:10px">Comprimir</h3><p class="small">Capas que reducen: de 128×128 píxeles a un vector de 32 números. Imposible guardarlo todo, así que la red se ve obligada a quedarse con lo esencial.</p></div>
+<div class="card"><span class="tag t">Cuello</span><h3 style="margin-top:10px">El resumen</h3><p class="small">Esos pocos números son la descripción comprimida: «panel rectangular, tono uniforme, marco oscuro». La red decide sola qué merece caber ahí.</p></div>
+<div class="card"><span class="tag i">Decoder</span><h3 style="margin-top:10px">Reconstruir</h3><p class="small">A partir del resumen vuelve a dibujar la imagen. Lo que no cupo en el cuello, no se puede reconstruir.</p></div>
+</div>
+<div class="note"><strong>Y ahí está el truco:</strong> se entrena solo con ejemplos <em>normales</em>. La red aprende a reconstruir bien lo que ha visto mil veces. Cuando le llega algo que nunca vio —una fisura— lo reconstruye mal, y ese error es la alarma. No necesitas ejemplos de falla para detectar fallas.</div>
+</section>
+
+<section>
+<h2><span class="num">02 · Banco de pruebas</span>Estrecha el cuello y mira qué sobrevive</h2>
+<p class="sub">Un recorte de 8×8 de un panel. Cambia entre el panel normal (el que la red vio en entrenamiento) y uno con fisura, y mueve el ancho del cuello de botella.</p>
+
+<div class="console">
+  <div class="controls">
+    <div style="flex:0 0 auto;display:flex;gap:8px">
+      <button class="btn" id="bNor">Panel normal</button>
+      <button class="btn ghost" id="bAno">Panel con fisura</button>
+    </div>
+    <div><label for="k">Ancho del cuello · <span id="kV">6</span> números guardados de 64</label><input type="range" id="k" min="1" max="40" value="6"></div>
+  </div>
+  <div class="grid g3" style="gap:18px">
+    <div><label>Entrada</label><div id="gA"></div></div>
+    <div><label>Reconstrucción</label><div id="gB"></div></div>
+    <div><label>Error de reconstrucción</label><div id="gC"></div></div>
+  </div>
+  <div class="readout" id="read"></div>
+  <div class="legend"><span>Gris = valor del píxel</span><span style="color:#e07a6a">Rojo = diferencia entre entrada y reconstrucción</span></div>
+</div>
+
+<div class="grid g2" style="margin-top:16px">
+<div class="card"><h3>Lo que acabas de ver</h3><p class="small">Con el cuello en 6, el panel normal se reconstruye casi perfecto y la fisura desaparece: la red no tiene dónde guardarla. Esa diferencia entre entrada y salida es la puntuación de anomalía.</p></div>
+<div class="card"><h3>Y el límite</h3><p class="small">Sube el cuello a 35 y la fisura también se reconstruye bien. El error cae y la alarma deja de sonar. Un autoencoder demasiado ancho aprende a copiar, y un copista no detecta nada.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">03 · Umbral</span>De un número a una decisión</h2>
+<p class="sub">El error de reconstrucción es un número continuo. Convertirlo en «alarma sí / alarma no» es una decisión tuya, no del modelo.</p>
+<div class="tablebox"><table>
+<tr><th style="width:34px">#</th><th>Paso</th><th>Detalle</th></tr>
+<tr><td>1</td><td>Entrena solo con datos normales</td><td>Ni una falla en el conjunto de entrenamiento. Si se cuela, la red aprende a reconstruirla y dejará de detectarla.</td></tr>
+<tr><td>2</td><td>Mide el error en datos normales que no usó</td><td>Te da la distribución del error «en condiciones sanas».</td></tr>
+<tr><td>3</td><td>Fija el umbral</td><td>Por ejemplo, el percentil 99 de esa distribución: se acepta 1% de falsas alarmas.</td></tr>
+<tr><td>4</td><td>Decide con qué te quedas</td><td>Umbral bajo: detectas casi todo pero avisas de más. Umbral alto: pocas alarmas y se te escapan fallas. Es un compromiso de negocio, no técnico.</td></tr>
+</table></div>
+<div class="note t"><strong>Ventaja decisiva en mantenimiento:</strong> las fallas son raras y variadas. Un clasificador necesita ejemplos de cada tipo de falla; un autoencoder solo necesita saber cómo es la normalidad, y detecta también fallas que nunca ocurrieron antes.</div>
+</section>
+
+<section>
+<h2><span class="num">04 · U-Net</span>Lo que añade la forma de U</h2>
+<p class="sub">Un autoencoder clásico reconstruye borroso: al comprimir se pierde dónde estaba exactamente cada borde. La U-Net arregla justo eso.</p>
+<div class="grid g2">
+<div class="card"><h3>Conexiones de salto</h3><p class="small">Cada capa del encoder envía una copia directa a la capa equivalente del decoder, saltándose el cuello. El decoder recibe a la vez el «qué es» del resumen y el «dónde estaba» del detalle original.</p></div>
+<div class="card"><h3>Resultado</h3><p class="small">Bordes nítidos y contornos precisos. Por eso la U-Net es el estándar en <strong>segmentación</strong>: no dice «hay una fisura», dice «esta fisura ocupa estos píxeles exactos».</p></div>
+</div>
+<div class="note"><strong>Cómo elegir entre las dos:</strong> si la respuesta que necesitas es un número por imagen (¿anómala o no?), autoencoder. Si necesitas un mapa píxel a píxel (¿qué área está afectada, cuántos m²?), U-Net.</div>
+</section>
+
+<section>
+<h2><span class="num">05 · Cuándo</span>Cuándo sí y cuándo no</h2>
+<div class="grid g2">
+<div class="card tick">
+<h3>Úsalos cuando…</h3>
+<ul>
+<li>Tienes <strong>muchos datos normales y casi ninguna falla</strong> etiquetada.</li>
+<li>Quieres detectar anomalías <strong>que nunca has visto</strong>, no clasificar tipos conocidos.</li>
+<li>Necesitas <strong>segmentar</strong>: delimitar áreas en una imagen o un mapa (U-Net).</li>
+<li>Quieres <strong>reducir ruido</strong> o comprimir señales conservando lo esencial.</li>
+<li>Buscas reducir dimensionalidad de forma no lineal, donde un PCA se queda corto.</li>
+</ul>
+</div>
+<div class="card cross">
+<h3>No los uses cuando…</h3>
+<ul>
+<li>Ya tienes cientos de ejemplos de cada tipo de falla: un clasificador dará mejor resultado y te dirá <em>qué</em> falla es.</li>
+<li>Necesitas explicar la alarma. El error de reconstrucción dice que algo no encaja, no qué ni por qué.</li>
+<li>Tu «normalidad» cambia con el tiempo (envejecimiento, suciedad estacional) y no piensas reentrenar: el error subirá solo y todo será alarma.</li>
+<li>El dato es una tabla pequeña. Ahí métodos como Isolation Forest son más simples y suelen bastar.</li>
+</ul>
+</div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">06 · Aplicación</span>En energías renovables</h2>
+<div class="grid g3">
+<div class="card"><span class="tag a">Solar</span><h3 style="margin-top:10px">Termografía sin etiquetas</h3><p class="small">Entrenas con miles de módulos sanos. Cualquier recorte que reconstruya mal sube a revisión humana: puntos calientes, sombras nuevas, suciedad, roturas.</p></div>
+<div class="card"><span class="tag t">Eólica</span><h3 style="margin-top:10px">Vibración y SCADA</h3><p class="small">El autoencoder aprende la firma normal de un aerogenerador. Cuando el error empieza a subir semana tras semana, hay degradación antes de que salte ninguna alarma del sistema.</p></div>
+<div class="card"><span class="tag i">Territorio</span><h3 style="margin-top:10px">Segmentación con U-Net</h3><p class="small">Sobre imagen satelital, delimitar cubiertas aprovechables, zonas de sombra o superficie ya ocupada por paneles, píxel a píxel, para estimar potencial instalable.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">07 · Ajustes</span>Valores de arranque</h2>
+<div class="tablebox"><table>
+<tr><th>Ajuste</th><th>Arranque</th><th>Qué significa</th></tr>
+<tr><td>Tamaño del cuello</td><td><code>16 – 64</code></td><td>El hiperparámetro que decide todo. Empieza estrecho y ensancha hasta que la reconstrucción de lo normal sea buena, ni un paso más.</td></tr>
+<tr><td>Profundidad</td><td><code>3 – 4</code> bloques por lado</td><td>Cada bloque reduce la resolución a la mitad. Simétrico entre encoder y decoder.</td></tr>
+<tr><td>Pérdida</td><td><code>MSE</code></td><td>Distancia píxel a píxel entre entrada y reconstrucción. <code>MAE</code> si hay atípicos.</td></tr>
+<tr><td>Activación</td><td><code>ReLU</code> + salida <code>sigmoid</code></td><td>La salida en 0–1 porque la entrada está escalada en 0–1.</td></tr>
+<tr><td>Optimizador · tasa</td><td><code>Adam · 1e-3</code></td><td>Punto de partida estándar.</td></tr>
+<tr><td>Umbral de alarma</td><td><code>percentil 95–99</code></td><td>Calculado sobre el error en datos normales no vistos.</td></tr>
+<tr><td>Variante</td><td><code>denoising</code></td><td>Entrenar añadiendo ruido a la entrada y pidiendo la original limpia. Da modelos más robustos.</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2><span class="num">08 · Trampas</span>Lo que hace que deje de detectar</h2>
+<div class="grid g2">
+<div class="card"><h3>Fallas dentro del entrenamiento</h3><p class="small">Si el 2% de tus imágenes «normales» tenían fisuras sin etiquetar, la red aprende a reconstruir fisuras. Deja de verlas exactamente para lo que la entrenaste.</p></div>
+<div class="card"><h3>Cuello demasiado ancho</h3><p class="small">Con suficiente capacidad la red aprende la identidad: copia la entrada tal cual. El error tiende a cero para todo y no hay señal.</p></div>
+<div class="card"><h3>Deriva de la normalidad</h3><p class="small">Un parque de cinco años no se ve como uno nuevo. Sin reentrenar, el error de fondo sube y el umbral fijo dispara falsas alarmas constantes.</p></div>
+<div class="card"><h3>Confundir error alto con falla</h3><p class="small">Una imagen movida, un reflejo o una nube también reconstruyen mal. El autoencoder detecta «raro», y raro incluye problemas de captura.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">09 · Vocabulario</span>Nueve palabras y sigues</h2>
+<div class="tablebox"><table>
+<tr><th>Término</th><th>En una línea</th></tr>
+<tr><td><code>encoder</code></td><td>La mitad que comprime la entrada.</td></tr>
+<tr><td><code>decoder</code></td><td>La mitad que reconstruye a partir del resumen.</td></tr>
+<tr><td><code>cuello de botella</code></td><td>La capa más estrecha: cuánta información puede sobrevivir.</td></tr>
+<tr><td><code>espacio latente</code></td><td>El conjunto de números del cuello; la descripción comprimida.</td></tr>
+<tr><td><code>error de reconstrucción</code></td><td>Diferencia entre lo que entró y lo que salió: la puntuación de anomalía.</td></tr>
+<tr><td><code>umbral</code></td><td>El corte a partir del cual el error se considera alarma.</td></tr>
+<tr><td><code>conexión de salto</code></td><td>Atajo del encoder al decoder que conserva el detalle fino (U-Net).</td></tr>
+<tr><td><code>segmentación</code></td><td>Etiquetar cada píxel, no la imagen entera.</td></tr>
+<tr><td><code>denoising</code></td><td>Entrenar con entrada ruidosa y objetivo limpio.</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2><span class="num">10 · Sigue</span>Las demás guías de la serie</h2>
+<div class="serie">
+<a href="01-cnn.html"><span>Guía 01</span>Redes convolucionales (CNN)<br><em>Cómo una red aprende a ver una fisura.</em></a>
+<a href="02-lstm.html"><span>Guía 02</span>Redes recurrentes (LSTM)<br><em>Cortar una serie de tiempo en ejemplos de entrenamiento.</em></a>
+<a href="03-hiperparametros.html"><span>Guía 03</span>Hiperparámetros<br><em>Qué mueve cada perilla y qué síntoma deja.</em></a>
+<a href="04-datos.html"><span>Guía 04</span>Preparación de datos<br><em>Nulos, atípicos, escalado y fuga de información.</em></a>
+<a href="06-gan.html"><span>Guía 06</span>Redes generativas (GAN)<br><em>El falsificador contra la policía.</em></a>
+<a href="07-pinn.html"><span>Guía 07</span>Redes con física (PINN)<br><em>Meter una ley física en la función de pérdida.</em></a>
+<a href="08-arboles.html"><span>Guía 08</span>Random Forest y SVM<br><em>Los modelos que ganan cuando el dato es una tabla.</em></a>
+<a href="09-geneticos.html"><span>Guía 09</span>Algoritmos genéticos<br><em>Optimizar por selección, cruce y mutación.</em></a>
+<a href="10-transformers.html"><span>Guía 10</span>Transformers, LLM y agentes<br><em>Atención, tokens y qué se paga al usar un agente.</em></a>
+</div>
+</section>
+
+<footer>
+<p><a href="index.html">&larr; Todas las explicaciones</a></p>
+<p>Guía de estudio · elaborada a partir de la clase de IA aplicada a energías renovables. Los valores de arranque son puntos de partida, no verdades: se ajustan con tus datos.</p>
+</footer>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const N=8, PI=Math.PI, a=u=>u===0?1/Math.SQRT2:1;
+const NOR=[],ANO=[];
+for(let r=0;r<N;r++){NOR.push([]);ANO.push([]);
+ for(let c=0;c<N;c++){const v=200-3*r+2*c;NOR[r].push(v);ANO[r].push(c===3?60:v)}}
+const ZIG=[];for(let s=0;s<2*N-1;s++){const t=[];
+ for(let u=0;u<N;u++){const v=s-u;if(v>=0&&v<N)t.push([u,v])}
+ ZIG.push(...(s%2?t:t.reverse()))}
+function dct(m){const C=[];for(let u=0;u<N;u++){C.push([]);for(let v=0;v<N;v++){let s=0;
+ for(let x=0;x<N;x++)for(let y=0;y<N;y++)s+=m[x][y]*Math.cos((2*x+1)*u*PI/16)*Math.cos((2*y+1)*v*PI/16);
+ C[u].push(0.25*a(u)*a(v)*s)}}return C}
+function idct(C){const m=[];for(let x=0;x<N;x++){m.push([]);for(let y=0;y<N;y++){let s=0;
+ for(let u=0;u<N;u++)for(let v=0;v<N;v++)s+=a(u)*a(v)*C[u][v]*Math.cos((2*x+1)*u*PI/16)*Math.cos((2*y+1)*v*PI/16);
+ m[x].push(0.25*s)}}return m}
+function grid(el,fn){let h='<div class="cellgrid" style="grid-template-columns:repeat(8,auto)">';
+ for(let r=0;r<N;r++)for(let c=0;c<N;c++){const o=fn(r,c);
+  h+=`<div class="cell" style="background:${o.bg};color:${o.fg||'#e9eef0'}">${o.t}</div>`}
+ $(el).innerHTML=h+"</div>"}
+
+let modo="nor";
+function run(){
+ const img=modo==="nor"?NOR:ANO, k=+$("k").value;
+ $("kV").textContent=k;
+ const C=dct(img), K=[];for(let u=0;u<N;u++)K.push(new Array(N).fill(0));
+ ZIG.slice(0,k).forEach(([u,v])=>K[u][v]=C[u][v]);
+ const R=idct(K);
+ let err=0;for(let r=0;r<N;r++)for(let c=0;c<N;c++)err+=Math.abs(R[r][c]-img[r][c]);
+ err/=64;
+ const g=v=>{v=Math.max(0,Math.min(255,Math.round(v)));return `rgb(${v},${v},${v})`};
+ grid("gA",(r,c)=>({bg:g(img[r][c]),t:"",fg:"#000"}));
+ grid("gB",(r,c)=>({bg:g(R[r][c]),t:"",fg:"#000"}));
+ grid("gC",(r,c)=>{const d=Math.abs(R[r][c]-img[r][c]);
+  return {bg:`rgba(224,122,106,${Math.min(1,d/70).toFixed(2)})`,t:Math.round(d),fg:d>45?"#fff":"#8fa3ac"}});
+ const alta=err>5;
+ $("read").innerHTML=`Entrada: <b>${modo==="nor"?"panel normal":"panel con fisura"}</b> · cuello de <b>${k}</b> números.<br>`+
+  `Error medio de reconstrucción: <b>${err.toFixed(1)}</b> · `+
+  `<span class="pill">${alta?"por encima del umbral: anomalía":"por debajo del umbral: normal"}</span><br>`+
+  (modo==="ano"&&!alta?"Con un cuello tan ancho la red también aprende a reconstruir la fisura. El error cae, la alarma no suena y el detector deja de servir.":
+   modo==="ano"?"La fisura no cabe en el resumen, así que la reconstrucción la borra: el error se concentra justo en la columna del defecto.":
+   alta?"El cuello es tan estrecho que ni siquiera un panel sano se reconstruye bien. Cada panel normal dispararía una falsa alarma.":
+   "Lo normal se reconstruye casi perfecto: la red vio mil paneles así y sabe describirlos con muy pocos números.")}
+$("k").oninput=run;
+$("bNor").onclick=()=>{modo="nor";$("bNor").className="btn";$("bAno").className="btn ghost";run()};
+$("bAno").onclick=()=>{modo="ano";$("bAno").className="btn";$("bNor").className="btn ghost";run()};
+run();
+</script>
+</body>
+</html>

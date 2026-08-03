@@ -1,0 +1,315 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redes generativas (GAN)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap');
+:root{
+  --ink:#10202c; --paper:#edefea; --card:#fff; --line:#d6dbd4; --muted:#5d6b72;
+  --amber:#c8760a; --teal:#0f8f82; --indigo:#3f4fbf; --violet:#7a55c7; --red:#ad3a2c;
+  --disp:'Space Grotesk','Segoe UI',sans-serif;
+  --body:'IBM Plex Sans','Segoe UI',Arial,sans-serif;
+  --mono:'IBM Plex Mono','Consolas',monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 var(--body)}
+.wrap{max-width:1060px;margin:0 auto;padding:0 22px 70px}
+a{color:var(--indigo)}
+
+/* ---- cabecera ---- */
+header.top{background:var(--ink);color:#e9eef0;margin-bottom:34px}
+header.top .wrap{padding-top:30px;padding-bottom:34px}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+header.top h1{font:700 clamp(2.1rem,5.4vw,3.5rem)/1.03 var(--disp);margin:14px 0 0;letter-spacing:-.02em}
+header.top .lead{max-width:640px;color:#b9c6cc;margin:14px 0 0;font-size:1.06rem}
+.backlink{display:inline-block;margin-top:24px;font:400 13px/1 var(--mono);color:#8fa3ac;text-decoration:none;border-bottom:1px solid #33475280;padding-bottom:3px}
+.backlink:hover{color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:20px}
+.chip{font:600 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;background:#1d3242;color:#9fc6cd;border-radius:4px;padding:6px 9px}
+
+/* ---- secciones ---- */
+section{margin-top:44px}
+h2{font:700 1.55rem/1.15 var(--disp);margin:0 0 6px;letter-spacing:-.01em}
+h2 .num{font:600 12px/1 var(--mono);color:var(--amber);display:block;letter-spacing:.16em;margin-bottom:9px}
+h3{font:600 1.02rem/1.3 var(--disp);margin:0 0 6px}
+p{margin:10px 0}
+.sub{color:var(--muted);max-width:700px}
+ul{padding-left:18px;margin:8px 0}
+li{margin:5px 0}
+.small{font-size:.88rem;color:var(--muted)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:820px){.g2,.g3{grid-template-columns:1fr}}
+.tick{border-top:4px solid var(--teal)}
+.cross{border-top:4px solid var(--red)}
+.tag{display:inline-block;font:600 11px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;padding:5px 8px;border-radius:4px;background:#e4e9e2;color:#41525a}
+.tag.a{background:#f7ead6;color:#8a5106}.tag.t{background:#dff0ed;color:#0a6960}
+.tag.i{background:#e4e6f8;color:#2f3c96}.tag.v{background:#eee5f8;color:#5b3b98}
+
+.note{border-left:4px solid var(--amber);background:#faf3e8;border-radius:0 10px 10px 0;padding:13px 16px;margin:16px 0}
+.note.t{border-color:var(--teal);background:#e9f5f3}
+.note.r{border-color:var(--red);background:#f9ecea}
+.note strong{font-family:var(--disp)}
+
+table{width:100%;border-collapse:collapse;font-size:.92rem;background:var(--card)}
+th,td{text-align:left;vertical-align:top;padding:11px 12px;border-bottom:1px solid var(--line)}
+th{font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#41525a;background:#e6eae4}
+td code,code{font:600 .88em var(--mono);background:#e6eae4;border-radius:4px;padding:2px 5px}
+.tablebox{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+
+/* ---- consola oscura (elemento firma) ---- */
+.console{background:var(--ink);color:#e9eef0;border-radius:18px;padding:24px;margin-top:16px}
+.console h3{color:#fff;font-size:1.1rem}
+.console .small,.console .sub{color:#93a6ae}
+.console label{display:block;font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#8fa3ac;margin-bottom:7px}
+.controls{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin:18px 0}
+.controls>div{flex:1 1 150px}
+select,input[type=range]{width:100%}
+select{font:400 14px var(--body);padding:8px;border-radius:8px;border:1px solid #33475f;background:#1a2c3a;color:#e9eef0}
+input[type=range]{accent-color:var(--amber);height:26px}
+.btn{font:600 13px var(--body);border:none;border-radius:8px;padding:10px 15px;cursor:pointer;background:var(--amber);color:#12202b}
+.btn:hover{background:#e08b17}
+.btn.ghost{background:transparent;color:#c6d4da;border:1px solid #37505f}
+.btn.ghost:hover{background:#1c2f3d}
+.btn:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.readout{font:400 13px/1.55 var(--mono);background:#0a161f;border:1px solid #23394a;border-radius:10px;padding:12px 14px;margin-top:14px;color:#c7d6dd;min-height:44px}
+.readout b{color:var(--amber);font-weight:600}
+.pill{font:600 11px var(--mono);color:#0a161f;background:#7fd6cb;border-radius:4px;padding:3px 6px}
+
+/* ---- rejillas numéricas (CNN) ---- */
+.cellgrid{display:inline-grid;gap:2px}
+.cell{width:34px;height:30px;display:grid;place-items:center;font:400 11px var(--mono);border-radius:3px;background:#22384a;color:#cfe0e7}
+.cell.win{outline:2px solid var(--amber);z-index:2}
+.cell.cur{background:var(--amber);color:#12202b;font-weight:600}
+.cell.empty{background:#16242f;color:#3d5361}
+@media(max-width:560px){.cell{width:27px;height:25px;font-size:10px}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font:400 12px var(--mono);color:#8fa3ac;margin-top:12px}
+
+/* ---- pie ---- */
+footer{border-top:1px solid var(--line);margin-top:56px;padding-top:20px;color:var(--muted);font-size:.86rem}
+.serie{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:14px}
+@media(max-width:820px){.serie{grid-template-columns:1fr}}
+.serie a{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;text-decoration:none;color:var(--ink)}
+.serie a:hover{border-color:var(--amber)}
+.serie a span{display:block;font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:4px}
+.serie a em{font-style:normal;color:var(--muted);font-size:.86rem}
+.serie a.soon{opacity:.55;pointer-events:none}
+.serie a.soon span{color:var(--muted)}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+@media print{header.top{background:#fff;color:#000}.console{background:#fff;color:#000;border:1px solid #999}.cell{background:#eee;color:#000}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+<p class="eyebrow">Serie IA para energías renovables · Guía 06</p>
+<h1>Redes generativas (GAN)</h1>
+<p class="lead">Dos redes entrenando una contra otra hasta que lo falso deja de distinguirse de lo real.</p>
+<div class="chips"><span class="chip">Datos sintéticos</span><span class="chip">Escenarios</span><span class="chip">Base de la IA generativa</span></div>
+<a class="backlink" href="00-indice.html">&larr; Volver al índice de la serie</a>
+</div></header>
+<div class="wrap">
+
+<section>
+<h2><span class="num">01 · La idea</span>El falsificador y la policía</h2>
+<p class="sub">Una GAN no es una red: son dos, entrenándose una contra la otra. La analogía del artículo original (Goodfellow, 2014) sigue siendo la mejor explicación.</p>
+<div class="grid g2" style="margin-top:14px">
+<div class="card"><span class="tag a">Generador</span><h3 style="margin-top:10px">El falsificador</h3><p class="small">Parte de ruido aleatorio y produce un ejemplo falso. Al principio son burdos. Su único objetivo es que el otro no los distinga de los reales.</p></div>
+<div class="card"><span class="tag t">Discriminador</span><h3 style="margin-top:10px">La policía</h3><p class="small">Recibe ejemplos reales y falsos mezclados y dice cuál es cuál. Cada vez que acierta, le indica al generador exactamente en qué se delató.</p></div>
+</div>
+<div class="note"><strong>Por qué funciona:</strong> los dos mejoran a la vez. La policía se vuelve más exigente, así que el falsificador tiene que afinar; el falsificador mejora, así que la policía tiene que fijarse mejor. El entrenamiento termina cuando la policía ya no puede hacer nada mejor que lanzar una moneda.</div>
+<div class="note t"><strong>Y aquí está el salto:</strong> hasta las GAN, las redes clasificaban, predecían o reconstruían lo que ya existía. A partir de aquí <em>generan</em> ejemplos nuevos que nunca estuvieron en los datos. Es la base de todo lo que hoy llamamos IA generativa.</div>
+</section>
+
+<section>
+<h2><span class="num">02 · Banco de pruebas</span>El duelo, ronda a ronda</h2>
+<p class="sub">La distribución real es el histograma de velocidad de viento de un emplazamiento. El generador empieza produciendo vientos que no se parecen en nada. Mira cómo se acerca y qué le pasa al acierto del discriminador.</p>
+
+<div class="console">
+  <div class="controls">
+    <div style="flex:0 0 auto;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn" id="one">Una ronda</button>
+      <button class="btn ghost" id="auto">Entrenar</button>
+      <button class="btn ghost" id="col">Forzar colapso de modo</button>
+      <button class="btn ghost" id="rst">Reiniciar</button>
+    </div>
+  </div>
+  <div id="chart"></div>
+  <div class="legend"><span style="color:#7fd6cb">■ distribución real</span><span style="color:#e0a13c">■ lo que produce el generador</span></div>
+  <div class="readout" id="read"></div>
+</div>
+
+<div class="grid g3" style="margin-top:16px">
+<div class="card"><h3>Ronda 0</h3><p class="small">El generador produce cualquier cosa. El discriminador acierta casi el 100%: distinguir es trivial.</p></div>
+<div class="card"><h3>Rondas intermedias</h3><p class="small">El acierto baja. Cada punto que pierde el discriminador es terreno que gana el generador.</p></div>
+<div class="card"><h3>Equilibrio</h3><p class="small">Acierto cerca del 50%: el discriminador no distingue mejor que al azar. Ahí es donde se para.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">03 · Métrica</span>Por qué 50% es la meta y no el fracaso</h2>
+<p class="sub">En cualquier otro modelo, un clasificador con 50% de acierto es basura. Aquí es exactamente el objetivo, y eso desordena la intuición.</p>
+<div class="grid g2">
+<div class="card"><h3>Cómo se lee</h3><p class="small">El discriminador es un juez, no el producto. Si acierta el 95%, tu generador aún es malo. Si acierta el 50%, ya no encuentra diferencia entre lo real y lo generado.</p></div>
+<div class="card cross"><h3>El problema práctico</h3><p class="small">No existe una métrica limpia de «qué tan buena es la GAN». La pérdida puede quedarse plana mientras la calidad mejora o empeora. Se evalúa mirando lo generado y comprobando que las <strong>estadísticas</strong> del conjunto sintético coinciden con las reales.</p></div>
+</div>
+<div class="note r"><strong>Prueba concreta para energías:</strong> si generas series de viento sintéticas, compara media, desviación, distribución horaria y correlaciones entre variables con las reales. Si un perfil generado tiene 9 m/s a las 3 de la mañana en agosto y eso nunca pasa en tu emplazamiento, la GAN aprendió la forma pero no las reglas.</div>
+</section>
+
+<section>
+<h2><span class="num">04 · Condicionadas</span>Pedirle lo que quieres</h2>
+<p class="sub">Una GAN normal genera «algo del montón». Una GAN condicionada recibe además una instrucción y genera dentro de ella.</p>
+<div class="grid g3">
+<div class="card"><h3>Condicionada por etiqueta</h3><p class="small">«Genérame un día de invierno nublado», «genérame un módulo con fisura». Es lo que permite fabricar ejemplos de la clase que casi no tienes.</p></div>
+<div class="card"><h3>Condicionada por una imagen</h3><p class="small">Entrada de baja resolución, salida de alta. Se usa para mejorar imágenes de satélite o de inspección antes de analizarlas.</p></div>
+<div class="card"><h3>Condicionada por física</h3><p class="small">Se añade a la pérdida un término que penaliza lo que viola una ecuación conocida. Consigue algo parecido a una PINN con un modelo más ligero, y además genera variedad.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">05 · Cuándo</span>Cuándo sí y cuándo no</h2>
+<div class="grid g2">
+<div class="card tick">
+<h3>Úsala cuando…</h3>
+<ul>
+<li>Necesitas <strong>ejemplos sintéticos</strong> de algo que tienes poco: fallas raras, eventos extremos.</li>
+<li>Quieres <strong>escenarios plausibles</strong> para dimensionar: mil años sintéticos de viento para elegir el tamaño de una batería.</li>
+<li>Buscas <strong>mejorar resolución</strong> de imágenes o mapas.</li>
+<li>Quieres <strong>compartir datos</strong> sin exponer los originales, generando un gemelo estadístico.</li>
+</ul>
+</div>
+<div class="card cross">
+<h3>No la uses cuando…</h3>
+<ul>
+<li>Quieres saber <strong>qué va a pasar mañana</strong>. Una GAN produce ejemplos verosímiles, no la predicción de un momento concreto. Eso es una LSTM.</li>
+<li>Tienes pocos datos reales. Una GAN entrenada con poco genera copias disfrazadas de sus propios datos.</li>
+<li>Necesitas garantías. Nada asegura que un perfil generado respete un límite físico si no se lo impones explícitamente.</li>
+<li>Un método más simple basta: para variedad estadística, un remuestreo o un modelo probabilístico suele resolverlo.</li>
+</ul>
+</div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">06 · Aplicación</span>En energías renovables</h2>
+<div class="grid g3">
+<div class="card"><span class="tag t">Dimensionamiento</span><h3 style="margin-top:10px">Años sintéticos</h3><p class="small">Con tres años medidos, generar cientos de años plausibles de viento e irradiancia para dimensionar almacenamiento contra escenarios que aún no ocurrieron.</p></div>
+<div class="card"><span class="tag a">Mantenimiento</span><h3 style="margin-top:10px">Fallas que casi no tienes</h3><p class="small">Ampliar el puñado de imágenes de módulos dañados para que un clasificador tenga con qué entrenar. Siempre validando contra fallas reales, nunca generadas.</p></div>
+<div class="card"><span class="tag i">Recurso</span><h3 style="margin-top:10px">Detalle espacial</h3><p class="small">Pasar de mapas de recurso de baja resolución a estimaciones más finas, útiles cuando la medición en sitio es cara.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">07 · Ajustes</span>Valores de arranque</h2>
+<div class="tablebox"><table>
+<tr><th>Ajuste</th><th>Arranque</th><th>Qué significa</th></tr>
+<tr><td>Arquitectura</td><td>convolucional en ambas</td><td>Generador y discriminador suelen ser simétricos: uno construye, el otro clasifica.</td></tr>
+<tr><td>Ruido de entrada</td><td><code>vector de 100</code></td><td>La semilla aleatoria de la que parte cada ejemplo generado.</td></tr>
+<tr><td>Optimizador · tasa</td><td><code>Adam · 2e-4</code></td><td>Valor casi canónico en GAN. Tasas más altas desestabilizan el duelo.</td></tr>
+<tr><td>Beta1 de Adam</td><td><code>0.5</code></td><td>Se baja del 0.9 habitual: ayuda a que el entrenamiento no oscile.</td></tr>
+<tr><td>Equilibrio</td><td><code>1:1</code></td><td>Un paso de cada red por ronda. Si el discriminador domina, el generador deja de recibir señal útil.</td></tr>
+<tr><td>Batch</td><td><code>32 – 128</code></td><td>Batches muy pequeños hacen el duelo más inestable.</td></tr>
+<tr><td>Normalización</td><td><code>BatchNorm</code></td><td>Estabiliza ambas redes; es casi obligatoria en GAN convolucionales.</td></tr>
+<tr><td>Variante estable</td><td><code>WGAN-GP</code></td><td>Cambia la forma de medir la diferencia entre distribuciones. Entrena más lento y se cae mucho menos.</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2><span class="num">08 · Trampas</span>Por qué las GAN tienen fama de difíciles</h2>
+<div class="grid g2">
+<div class="card"><h3>Colapso de modo</h3><p class="small">El generador encuentra un ejemplo que cuela y lo repite siempre. Produce algo perfecto y sin ninguna variedad. Es el fallo más común y hay un botón arriba para verlo.</p></div>
+<div class="card"><h3>Un rival demasiado fuerte</h3><p class="small">Si el discriminador aprende mucho más rápido, acierta siempre y el gradiente que llega al generador se apaga. Deja de aprender del todo.</p></div>
+<div class="card"><h3>La pérdida no dice nada</h3><p class="small">A diferencia de cualquier otro modelo, aquí una pérdida que baja no significa que vaya mejor. Hay que mirar las muestras generadas.</p></div>
+<div class="card"><h3>Memorizar en vez de generar</h3><p class="small">Con pocos datos reales, la GAN reproduce ejemplos del entrenamiento con pequeñas variaciones. Compruébalo buscando el vecino más cercano real de cada muestra generada.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">09 · Vocabulario</span>Nueve palabras y sigues</h2>
+<div class="tablebox"><table>
+<tr><th>Término</th><th>En una línea</th></tr>
+<tr><td><code>generador</code></td><td>La red que fabrica ejemplos falsos a partir de ruido.</td></tr>
+<tr><td><code>discriminador</code></td><td>La red que juzga si un ejemplo es real o generado.</td></tr>
+<tr><td><code>adversarial</code></td><td>Dos redes con objetivos opuestos entrenando a la vez.</td></tr>
+<tr><td><code>vector de ruido</code></td><td>La semilla aleatoria de cada ejemplo generado.</td></tr>
+<tr><td><code>equilibrio</code></td><td>El punto donde el discriminador acierta el 50%.</td></tr>
+<tr><td><code>colapso de modo</code></td><td>El generador produce siempre lo mismo y pierde variedad.</td></tr>
+<tr><td><code>GAN condicionada</code></td><td>Se le indica qué tipo de ejemplo debe generar.</td></tr>
+<tr><td><code>datos sintéticos</code></td><td>Ejemplos generados que imitan las estadísticas de los reales.</td></tr>
+<tr><td><code>super-resolución</code></td><td>Generar una versión de más detalle de una imagen.</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2><span class="num">10 · Sigue</span>Las demás guías de la serie</h2>
+<div class="serie">
+<a href="01-cnn.html"><span>Guía 01</span>Redes convolucionales (CNN)<br><em>Cómo una red aprende a ver una fisura.</em></a>
+<a href="02-lstm.html"><span>Guía 02</span>Redes recurrentes (LSTM)<br><em>Cortar una serie de tiempo en ejemplos de entrenamiento.</em></a>
+<a href="03-hiperparametros.html"><span>Guía 03</span>Hiperparámetros<br><em>Qué mueve cada perilla y qué síntoma deja.</em></a>
+<a href="04-datos.html"><span>Guía 04</span>Preparación de datos<br><em>Nulos, atípicos, escalado y fuga de información.</em></a>
+<a href="05-autoencoder.html"><span>Guía 05</span>Autoencoders y U-Net<br><em>Comprimir y reconstruir para detectar lo que no encaja.</em></a>
+<a href="07-pinn.html"><span>Guía 07</span>Redes con física (PINN)<br><em>Meter una ley física en la función de pérdida.</em></a>
+<a href="08-arboles.html"><span>Guía 08</span>Random Forest y SVM<br><em>Los modelos que ganan cuando el dato es una tabla.</em></a>
+<a href="09-geneticos.html"><span>Guía 09</span>Algoritmos genéticos<br><em>Optimizar por selección, cruce y mutación.</em></a>
+<a href="10-transformers.html"><span>Guía 10</span>Transformers, LLM y agentes<br><em>Atención, tokens y qué se paga al usar un agente.</em></a>
+</div>
+</section>
+
+<footer>
+<p><a href="index.html">&larr; Todas las explicaciones</a></p>
+<p>Guía de estudio · elaborada a partir de la clase de IA aplicada a energías renovables. Los valores de arranque son puntos de partida, no verdades: se ajustan con tus datos.</p>
+</footer>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const R=[2,5,9,14,17,16,12,9,6,4,3,3].map((v,_,A)=>v/A.reduce((a,b)=>a+b));
+const START=[1,1,2,3,5,8,12,16,18,15,10,6];
+let G=[],ronda=0,timer=null,colapso=false;
+const norm=a=>{const s=a.reduce((x,y)=>x+y,0);return a.map(v=>Math.max(0,v)/s)};
+function reset(){G=norm(START.slice());ronda=0;colapso=false;clearInterval(timer);timer=null;draw()}
+function tv(){return 0.5*R.reduce((s,v,i)=>s+Math.abs(v-G[i]),0)}
+function acc(){return 50+50*Math.min(1,tv()*2.2)}
+function ronda1(){
+ if(colapso)return;
+ G=norm(G.map((v,i)=>v+0.14*(R[i]-v)+(Math.random()-0.5)*0.004));ronda++;draw()}
+
+function draw(){
+ const W=700,H=230,bw=44,x0=30;
+ let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="Distribución real frente a la generada">`;
+ const mx=Math.max(...R,...G,0.01);
+ for(let i=0;i<12;i++){
+  const x=x0+i*(bw+11);
+  const hr=Math.round(R[i]/mx*150), hg=Math.round(G[i]/mx*150);
+  s+=`<rect x="${x}" y="${175-hr}" width="${bw}" height="${hr}" rx="3" fill="#7fd6cb" opacity=".45"/>`;
+  s+=`<rect x="${x+9}" y="${175-hg}" width="${bw-18}" height="${hg}" rx="3" fill="#e0a13c"/>`;
+  s+=`<text x="${x+bw/2}" y="191" font-size="10" font-family="IBM Plex Mono,monospace" fill="#5d7383" text-anchor="middle">${i+1}</text>`}
+ s+=`<line x1="${x0-8}" y1="175" x2="${W-14}" y2="175" stroke="#2b4152"/>`;
+ s+=`<text x="${x0-8}" y="209" font-size="10" font-family="IBM Plex Mono,monospace" fill="#5d7383">velocidad de viento m/s</text>`;
+ const a=acc();
+ s+=`<text x="${W-14}" y="34" font-size="15" font-family="Space Grotesk,sans-serif" font-weight="700" fill="${a<58?'#7fd6cb':'#e0a13c'}" text-anchor="end">acierto del discriminador ${a.toFixed(0)}%</text>`;
+ s+=`<text x="${W-14}" y="52" font-size="11" font-family="IBM Plex Mono,monospace" fill="#5d7383" text-anchor="end">ronda ${ronda}</text></svg>`;
+ $("chart").innerHTML=s;
+ const a2=acc();
+ let m;
+ if(colapso) m="<b>Colapso de modo.</b> El generador encontró un valor que colaba y ahora produce solo ese. Cada muestra suelta parece razonable, pero el conjunto no se parece en nada al real: perdió toda la variedad. El discriminador vuelve a distinguirlo sin esfuerzo.";
+ else if(a2>85) m="<b>Ronda temprana.</b> Lo generado no se parece al viento real de este emplazamiento. Distinguir es trivial, y por eso el discriminador le está dando mucha información al generador.";
+ else if(a2>58) m="<b>Va aprendiendo.</b> El generador ya reproduce la forma general. Cada punto de acierto que pierde el discriminador es terreno ganado.";
+ else m="<b>Equilibrio.</b> El discriminador ya no distingue mejor que lanzando una moneda. Aquí se para el entrenamiento: las muestras generadas son estadísticamente indistinguibles de las reales.";
+ $("read").innerHTML=m}
+
+$("one").onclick=ronda1;
+$("auto").onclick=()=>{if(timer){clearInterval(timer);timer=null;return}
+ timer=setInterval(()=>{if(acc()<50.6||colapso){clearInterval(timer);timer=null}else ronda1()},240)};
+$("col").onclick=()=>{clearInterval(timer);timer=null;colapso=true;
+ const i=R.indexOf(Math.max(...R));G=R.map((_,j)=>j===i?1:0.004);G=norm(G);ronda++;draw()};
+$("rst").onclick=reset;
+reset();
+</script>
+</body>
+</html>

@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Transformers, LLM y agentes</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap');
+:root{
+  --ink:#10202c; --paper:#edefea; --card:#fff; --line:#d6dbd4; --muted:#5d6b72;
+  --amber:#c8760a; --teal:#0f8f82; --indigo:#3f4fbf; --violet:#7a55c7; --red:#ad3a2c;
+  --disp:'Space Grotesk','Segoe UI',sans-serif;
+  --body:'IBM Plex Sans','Segoe UI',Arial,sans-serif;
+  --mono:'IBM Plex Mono','Consolas',monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 var(--body)}
+.wrap{max-width:1060px;margin:0 auto;padding:0 22px 70px}
+a{color:var(--indigo)}
+
+/* ---- cabecera ---- */
+header.top{background:var(--ink);color:#e9eef0;margin-bottom:34px}
+header.top .wrap{padding-top:30px;padding-bottom:34px}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+header.top h1{font:700 clamp(2.1rem,5.4vw,3.5rem)/1.03 var(--disp);margin:14px 0 0;letter-spacing:-.02em}
+header.top .lead{max-width:640px;color:#b9c6cc;margin:14px 0 0;font-size:1.06rem}
+.backlink{display:inline-block;margin-top:24px;font:400 13px/1 var(--mono);color:#8fa3ac;text-decoration:none;border-bottom:1px solid #33475280;padding-bottom:3px}
+.backlink:hover{color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:20px}
+.chip{font:600 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;background:#1d3242;color:#9fc6cd;border-radius:4px;padding:6px 9px}
+
+/* ---- secciones ---- */
+section{margin-top:44px}
+h2{font:700 1.55rem/1.15 var(--disp);margin:0 0 6px;letter-spacing:-.01em}
+h2 .num{font:600 12px/1 var(--mono);color:var(--amber);display:block;letter-spacing:.16em;margin-bottom:9px}
+h3{font:600 1.02rem/1.3 var(--disp);margin:0 0 6px}
+p{margin:10px 0}
+.sub{color:var(--muted);max-width:700px}
+ul{padding-left:18px;margin:8px 0}
+li{margin:5px 0}
+.small{font-size:.88rem;color:var(--muted)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:820px){.g2,.g3{grid-template-columns:1fr}}
+.tick{border-top:4px solid var(--teal)}
+.cross{border-top:4px solid var(--red)}
+.tag{display:inline-block;font:600 11px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;padding:5px 8px;border-radius:4px;background:#e4e9e2;color:#41525a}
+.tag.a{background:#f7ead6;color:#8a5106}.tag.t{background:#dff0ed;color:#0a6960}
+.tag.i{background:#e4e6f8;color:#2f3c96}.tag.v{background:#eee5f8;color:#5b3b98}
+
+.note{border-left:4px solid var(--amber);background:#faf3e8;border-radius:0 10px 10px 0;padding:13px 16px;margin:16px 0}
+.note.t{border-color:var(--teal);background:#e9f5f3}
+.note.r{border-color:var(--red);background:#f9ecea}
+.note strong{font-family:var(--disp)}
+
+table{width:100%;border-collapse:collapse;font-size:.92rem;background:var(--card)}
+th,td{text-align:left;vertical-align:top;padding:11px 12px;border-bottom:1px solid var(--line)}
+th{font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#41525a;background:#e6eae4}
+td code,code{font:600 .88em var(--mono);background:#e6eae4;border-radius:4px;padding:2px 5px}
+.tablebox{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+
+/* ---- consola oscura (elemento firma) ---- */
+.console{background:var(--ink);color:#e9eef0;border-radius:18px;padding:24px;margin-top:16px}
+.console h3{color:#fff;font-size:1.1rem}
+.console .small,.console .sub{color:#93a6ae}
+.console label{display:block;font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#8fa3ac;margin-bottom:7px}
+.controls{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin:18px 0}
+.controls>div{flex:1 1 150px}
+select,input[type=range]{width:100%}
+select{font:400 14px var(--body);padding:8px;border-radius:8px;border:1px solid #33475f;background:#1a2c3a;color:#e9eef0}
+input[type=range]{accent-color:var(--amber);height:26px}
+.btn{font:600 13px var(--body);border:none;border-radius:8px;padding:10px 15px;cursor:pointer;background:var(--amber);color:#12202b}
+.btn:hover{background:#e08b17}
+.btn.ghost{background:transparent;color:#c6d4da;border:1px solid #37505f}
+.btn.ghost:hover{background:#1c2f3d}
+.btn:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.readout{font:400 13px/1.55 var(--mono);background:#0a161f;border:1px solid #23394a;border-radius:10px;padding:12px 14px;margin-top:14px;color:#c7d6dd;min-height:44px}
+.readout b{color:var(--amber);font-weight:600}
+.pill{font:600 11px var(--mono);color:#0a161f;background:#7fd6cb;border-radius:4px;padding:3px 6px}
+
+/* ---- rejillas numéricas (CNN) ---- */
+.cellgrid{display:inline-grid;gap:2px}
+.cell{width:34px;height:30px;display:grid;place-items:center;font:400 11px var(--mono);border-radius:3px;background:#22384a;color:#cfe0e7}
+.cell.win{outline:2px solid var(--amber);z-index:2}
+.cell.cur{background:var(--amber);color:#12202b;font-weight:600}
+.cell.empty{background:#16242f;color:#3d5361}
+@media(max-width:560px){.cell{width:27px;height:25px;font-size:10px}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font:400 12px var(--mono);color:#8fa3ac;margin-top:12px}
+
+/* ---- pie ---- */
+footer{border-top:1px solid var(--line);margin-top:56px;padding-top:20px;color:var(--muted);font-size:.86rem}
+.serie{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:14px}
+@media(max-width:820px){.serie{grid-template-columns:1fr}}
+.serie a{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;text-decoration:none;color:var(--ink)}
+.serie a:hover{border-color:var(--amber)}
+.serie a span{display:block;font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:4px}
+.serie a em{font-style:normal;color:var(--muted);font-size:.86rem}
+.serie a.soon{opacity:.55;pointer-events:none}
+.serie a.soon span{color:var(--muted)}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+@media print{header.top{background:#fff;color:#000}.console{background:#fff;color:#000;border:1px solid #999}.cell{background:#eee;color:#000}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+<p class="eyebrow">Serie IA para energías renovables · Guía 10</p>
+<h1>Transformers, LLM y agentes</h1>
+<p class="lead">Qué hay debajo de un agente, qué es un token de verdad y por qué una instrucción larga sale más barata que seis intentos.</p>
+<div class="chips"><span class="chip">Atención</span><span class="chip">Tokens y coste</span><span class="chip">Instrucciones</span><span class="chip">Responsabilidad</span></div>
+<a class="backlink" href="00-indice.html">&larr; Volver al índice de la serie</a>
+</div></header>
+<div class="wrap">
+
+<section>
+<h2><span class="num">01 · La idea</span>Atención: cada palabra mira a todas las demás</h2>
+<p class="sub">Una LSTM lee en orden y arrastra memoria, así que lo que pasó al principio de un texto largo se va diluyendo. Un transformer hace algo distinto: procesa toda la secuencia a la vez y, para cada palabra, calcula cuánto debe fijarse en cada una de las otras.</p>
+<div style="margin-top:12px">
+<div style="display:flex;gap:6px;flex-wrap:wrap;align-items:flex-end">
+<div style="text-align:center;min-width:52px"><div style="height:10px;background:#c8c3b8;border-radius:3px 3px 0 0"></div><div style="font:600 11px/1.4 IBM Plex Mono,monospace;margin-top:5px;color:#5d6b72">la</div></div>
+<div style="text-align:center;min-width:52px"><div style="height:52px;background:#c8760a;border-radius:3px 3px 0 0"></div><div style="font:600 11px/1.4 IBM Plex Mono,monospace;margin-top:5px;color:#14202b">potencia</div></div>
+<div style="text-align:center;min-width:52px"><div style="height:10px;background:#c8c3b8;border-radius:3px 3px 0 0"></div><div style="font:600 11px/1.4 IBM Plex Mono,monospace;margin-top:5px;color:#5d6b72">del</div></div>
+<div style="text-align:center;min-width:52px"><div style="height:27px;background:#c8760a;border-radius:3px 3px 0 0"></div><div style="font:600 11px/1.4 IBM Plex Mono,monospace;margin-top:5px;color:#14202b">parque</div></div>
+<div style="text-align:center;min-width:52px"><div style="height:15px;background:#c8c3b8;border-radius:3px 3px 0 0"></div><div style="font:600 11px/1.4 IBM Plex Mono,monospace;margin-top:5px;color:#5d6b72">cayó</div></div>
+<div style="text-align:center;min-width:52px"><div style="height:24px;background:#c8760a;border-radius:3px 3px 0 0"></div><div style="font:600 11px/1.4 IBM Plex Mono,monospace;margin-top:5px;color:#14202b">porque</div></div>
+<div style="text-align:center;min-width:52px"><div style="height:13px;background:#c8c3b8;border-radius:3px 3px 0 0"></div><div style="font:600 11px/1.4 IBM Plex Mono,monospace;margin-top:5px;color:#5d6b72">estaba</div></div>
+<div style="text-align:center;min-width:52px"><div style="height:12px;background:#c8c3b8;border-radius:3px 3px 0 0"></div><div style="font:600 11px/1.4 IBM Plex Mono,monospace;margin-top:5px;color:#5d6b72">muy</div></div>
+<div style="text-align:center;min-width:52px"><div style="height:39px;background:#c8760a;border-radius:3px 3px 0 0"></div><div style="font:600 11px/1.4 IBM Plex Mono,monospace;margin-top:5px;color:#14202b">nublado</div></div>
+</div>
+<p class="small" style="margin-top:10px">Al procesar la palabra <strong>cayó</strong>, el modelo reparte su atención entre las demás palabras de la frase. La altura de cada barra es cuánto pesa esa palabra para entender <em>qué</em> cayó y <em>por qué</em>. Nadie programó esos pesos: se aprendieron.</p>
+</div>
+<div class="note"><strong>Por qué cambió todo:</strong> al no depender del orden secuencial, el cálculo se puede paralelizar por completo. Eso permitió entrenar con cantidades de texto imposibles hasta entonces, y de ahí salieron los modelos de lenguaje que usamos hoy.</div>
+</section>
+
+<section>
+<h2><span class="num">02 · Banco de pruebas</span>Tokens: la unidad que se paga</h2>
+<p class="sub">El modelo no ve palabras, ve tokens: trozos de texto. Las palabras cortas suelen ser un token; las largas se parten en varios. Escribe algo o usa un ejemplo y mira el desglose y el coste.</p>
+
+<div class="console">
+  <div class="controls">
+    <div style="flex:0 0 auto;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn ghost" id="ex1">Instrucción vaga</button>
+      <button class="btn ghost" id="ex2">Instrucción robusta</button>
+    </div>
+    <div style="flex:2 1 220px"><label for="mod">Rango de precio del modelo</label>
+      <select id="mod">
+        <option value="0.8,4">Modelo pequeño · ~0.8 / 4 USD por millón</option>
+        <option value="3,15" selected>Modelo medio · ~3 / 15 USD por millón</option>
+        <option value="15,75">Modelo grande · ~15 / 75 USD por millón</option>
+      </select></div>
+  </div>
+  <label for="txt">Tu instrucción</label>
+  <textarea id="txt" rows="4" style="width:100%;font:400 14px/1.5 IBM Plex Mono,monospace;background:#0a161f;color:#c7d6dd;border:1px solid #23394a;border-radius:10px;padding:12px"></textarea>
+  <div class="controls" style="margin-top:14px">
+    <div><label for="out">Longitud de la respuesta · <span id="outV">600</span> tokens</label><input type="range" id="out" min="100" max="4000" step="100" value="600"></div>
+    <div><label for="it">Idas y vueltas hasta acertar · <span id="itV">1</span></label><input type="range" id="it" min="1" max="12" value="1"></div>
+  </div>
+  <div id="chips" style="display:flex;flex-wrap:wrap;gap:4px;margin:8px 0 4px"></div>
+  <div class="readout" id="read"></div>
+</div>
+
+<div class="note t"><strong>El detalle que sorprende a todo el mundo:</strong> en una conversación, cada turno reenvía todo lo anterior. La segunda pregunta paga la primera otra vez, la tercera paga las dos. El coste de iterar no crece de forma lineal, crece acumulándose. Por eso una instrucción larga y precisa suele salir más barata que seis intentos cortos.</div>
+</section>
+
+<section>
+<h2><span class="num">03 · Escala</span>Parámetros, tokens y por qué se confunden</h2>
+<div class="grid g3">
+<div class="card"><h3>Parámetro</h3><p class="small">Un peso interno que el modelo aprendió y que queda guardado. Los modelos actuales tienen del orden de cientos de miles de millones. Los cuentas una vez, al entrenar.</p></div>
+<div class="card"><h3>Token</h3><p class="small">Un trozo de texto de entrada o salida. Los cuentas cada vez que usas el modelo, y son los que pagas.</p></div>
+<div class="card"><h3>Ventana de contexto</h3><p class="small">Cuántos tokens caben en una conversación. Cuando se llena, lo más antiguo se descarta: por eso un chat muy largo «olvida» lo que dijiste al principio.</p></div>
+</div>
+<div class="note r"><strong>Y el lío de las cifras:</strong> en inglés <em>billion</em> son mil millones y <em>trillion</em> es un billón español. Cuando leas que un modelo tiene «175 billion parámetros», son 175 mil millones. La mayoría de las cifras enormes que circulan arrastran ese cambio de escala.</div>
+</section>
+
+<section>
+<h2><span class="num">04 · Agente</span>Qué añade un agente a un modelo de lenguaje</h2>
+<p class="sub">Un LLM recibe texto y devuelve texto. Un agente es ese mismo modelo dentro de un bucle, con permiso para actuar.</p>
+<div class="tablebox"><table>
+<tr><th style="width:34px">#</th><th>Pieza</th><th>Qué aporta</th></tr>
+<tr><td>1</td><td><strong>Herramientas</strong></td><td>Ejecutar código, leer archivos, consultar una base de datos, llamar a una API meteorológica. Deja de solo hablar.</td></tr>
+<tr><td>2</td><td><strong>Bucle</strong></td><td>Planifica, actúa, mira el resultado y decide el siguiente paso. Repite hasta terminar o hasta agotar su presupuesto.</td></tr>
+<tr><td>3</td><td><strong>Memoria</strong></td><td>Notas persistentes entre sesiones, porque la ventana de contexto no basta para un trabajo largo.</td></tr>
+<tr><td>4</td><td><strong>Instrucciones</strong></td><td>Un documento que define su papel, sus límites y su procedimiento. Es lo que más determina el resultado.</td></tr>
+</table></div>
+<div class="note"><strong>Por qué siguen importando las guías anteriores:</strong> un agente que te construye un modelo de predicción tiene que elegir arquitectura, ventana, hiperparámetros y métricas. Si tú no sabes qué pedirle ni cómo revisar lo que devuelve, el agente decidirá por ti y no tendrás forma de saber si acertó.</div>
+</section>
+
+<section>
+<h2><span class="num">05 · Instrucciones</span>Anatomía de una instrucción que funciona</h2>
+<div class="tablebox"><table>
+<tr><th style="width:22%">Parte</th><th>Qué poner</th></tr>
+<tr><td><strong>Papel</strong></td><td>Desde qué posición debe responder: analista de datos de generación, revisor de código, redactor técnico.</td></tr>
+<tr><td><strong>Contexto</strong></td><td>Los datos, el objetivo real y las restricciones. Aquí es donde casi todos se quedan cortos.</td></tr>
+<tr><td><strong>Tarea</strong></td><td>Una sola cosa, con verbo concreto. «Compara», «detecta», «resume en» son mejores que «analiza».</td></tr>
+<tr><td><strong>Formato</strong></td><td>Tabla, lista, código comentado, extensión aproximada. Ahorra la mitad de las iteraciones.</td></tr>
+<tr><td><strong>Criterios</strong></td><td>Qué hace buena a la respuesta y qué no quieres ver. Incluye qué debe hacer si le faltan datos.</td></tr>
+<tr><td><strong>Ejemplos</strong></td><td>Uno o dos ejemplos de entrada y salida deseada valen más que tres párrafos de explicación.</td></tr>
+</table></div>
+<div class="note t"><strong>Y una instrucción que se corrige sola:</strong> para tareas repetitivas, conviene pedirle que al terminar evalúe su propio resultado contra los criterios y vuelva a intentarlo si no los cumple. Sale más barato que revisarlo tú y volver a pedirlo.</div>
+</section>
+
+<section>
+<h2><span class="num">06 · Aplicación</span>En energías renovables</h2>
+<div class="grid g3">
+<div class="card"><span class="tag i">Documentos</span><h3 style="margin-top:10px">Extraer datos de informes</h3><p class="small">Sacar parámetros de fichas técnicas, contratos o informes de inspección en PDF y volcarlos a una tabla. Tarea aburrida, alto volumen, verificable: el caso ideal.</p></div>
+<div class="card"><span class="tag t">Código</span><h3 style="margin-top:10px">Construir el pipeline</h3><p class="small">Escribir el análisis exploratorio, el preprocesado y el entrenamiento. Aquí es donde saber lo de las guías 01 a 09 se traduce directamente en un resultado mejor.</p></div>
+<div class="card"><span class="tag a">Operación</span><h3 style="margin-top:10px">Consultar la operación</h3><p class="small">Un agente con acceso a los datos de SCADA que responda preguntas en lenguaje natural y genere el informe semanal. Con las cifras siempre trazables a su fuente.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">07 · Responsabilidad</span>Tú eres el discriminador</h2>
+<p class="sub">La guía 06 explica el discriminador dentro de una GAN. En el trabajo real ese papel es tuyo, y no es una metáfora bonita: es la parte que no puedes delegar.</p>
+<div class="grid g2">
+<div class="card"><h3>Cuatro decisiones que siguen siendo tuyas</h3><ul>
+<li>Qué automatizar y qué no.</li>
+<li>Cómo pedirlo, con el detalle suficiente.</li>
+<li>Entender qué hizo el modelo por dentro.</li>
+<li>Validar el resultado y responder por él.</li>
+</ul></div>
+<div class="card cross"><h3>Lo que no funciona como respuesta</h3><p class="small">«Lo hizo la IA» no es una explicación cuando un cliente pregunta por un informe que enviaste. Si entregas un modelo, entrega también sus métricas y su margen de error. Y si te devuelven un análisis hecho con IA que contradice el tuyo, tampoco lo aceptes sin revisarlo: al otro lado hay exactamente el mismo problema.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">08 · Trampas</span>Lo que hay que vigilar</h2>
+<div class="grid g2">
+<div class="card"><h3>Inventa con seguridad</h3><p class="small">Un modelo de lenguaje genera lo que resulta plausible, no lo que consta. Cifras, normas y referencias hay que verificarlas siempre, y suenan igual de convincentes estén bien o mal.</p></div>
+<div class="card"><h3>El contexto se llena</h3><p class="small">En conversaciones largas se pierde lo del principio. Si algo es importante, vuelve a ponerlo en el mensaje en vez de confiar en que lo recuerda.</p></div>
+<div class="card"><h3>Coste que se dispara</h3><p class="small">Un agente en bucle puede encadenar decenas de llamadas por tarea. Ponle límite de pasos y de presupuesto antes de soltarlo, no después.</p></div>
+<div class="card"><h3>Datos que no deberían salir</h3><p class="small">Antes de subir datos de un cliente o mediciones bajo acuerdo de confidencialidad, revisa qué permite el contrato y qué hace el proveedor con lo que envías.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">09 · Vocabulario</span>Diez palabras y cierras la serie</h2>
+<div class="tablebox"><table>
+<tr><th>Término</th><th>En una línea</th></tr>
+<tr><td><code>transformer</code></td><td>Arquitectura basada en atención que procesa toda la secuencia a la vez.</td></tr>
+<tr><td><code>atención</code></td><td>Mecanismo que decide cuánto pesa cada parte de la entrada para cada salida.</td></tr>
+<tr><td><code>token</code></td><td>Trozo de texto: la unidad que se cuenta y se paga.</td></tr>
+<tr><td><code>ventana de contexto</code></td><td>Cuántos tokens caben a la vez en la conversación.</td></tr>
+<tr><td><code>preentrenado</code></td><td>Modelo ya entrenado con datos generales, listo para usar o afinar.</td></tr>
+<tr><td><code>fine-tuning</code></td><td>Reentrenar un modelo existente con tus propios datos.</td></tr>
+<tr><td><code>destilación</code></td><td>Trasladar lo esencial de un modelo enorme a otro pequeño que corre en tu equipo.</td></tr>
+<tr><td><code>RAG</code></td><td>Buscar en tus documentos y pasarle al modelo solo lo relevante, en vez de reentrenarlo.</td></tr>
+<tr><td><code>agente</code></td><td>Un modelo dentro de un bucle, con herramientas y permiso para actuar.</td></tr>
+<tr><td><code>alucinación</code></td><td>Una respuesta inventada que suena igual de segura que una correcta.</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2><span class="num">10 · Sigue</span>Las demás guías de la serie</h2>
+<div class="serie">
+<a href="01-cnn.html"><span>Guía 01</span>Redes convolucionales (CNN)<br><em>Cómo una red aprende a ver una fisura.</em></a>
+<a href="02-lstm.html"><span>Guía 02</span>Redes recurrentes (LSTM)<br><em>Cortar una serie de tiempo en ejemplos de entrenamiento.</em></a>
+<a href="03-hiperparametros.html"><span>Guía 03</span>Hiperparámetros<br><em>Qué mueve cada perilla y qué síntoma deja.</em></a>
+<a href="04-datos.html"><span>Guía 04</span>Preparación de datos<br><em>Nulos, atípicos, escalado y fuga de información.</em></a>
+<a href="05-autoencoder.html"><span>Guía 05</span>Autoencoders y U-Net<br><em>Comprimir y reconstruir para detectar lo que no encaja.</em></a>
+<a href="06-gan.html"><span>Guía 06</span>Redes generativas (GAN)<br><em>El falsificador contra la policía.</em></a>
+<a href="07-pinn.html"><span>Guía 07</span>Redes con física (PINN)<br><em>Meter una ley física en la función de pérdida.</em></a>
+<a href="08-arboles.html"><span>Guía 08</span>Random Forest y SVM<br><em>Los modelos que ganan cuando el dato es una tabla.</em></a>
+<a href="09-geneticos.html"><span>Guía 09</span>Algoritmos genéticos<br><em>Optimizar por selección, cruce y mutación.</em></a>
+</div>
+</section>
+
+<footer>
+<p><a href="index.html">&larr; Todas las explicaciones</a></p>
+<p>Guía de estudio · elaborada a partir de la clase de IA aplicada a energías renovables. Los valores de arranque son puntos de partida, no verdades: se ajustan con tus datos.</p>
+</footer>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const EJ1="analiza los datos del parque y dime qué pasa";
+const EJ2="Actúa como analista de datos de generación fotovoltaica.\nContexto: adjunto 18 meses de datos horarios de una planta de 800 kW (irradiancia, temperatura de módulo, potencia AC). La planta está en Boyacá y desde marzo notamos menos producción de la esperada.\nTarea: identifica los periodos con desviación superior al 15% respecto a la producción esperada por irradiancia, y ordénalos por pérdida acumulada en kWh.\nFormato: tabla con periodo, pérdida en kWh, desviación media y una hipótesis por fila. Máximo 10 filas.\nCriterios: no interpretes las noches como pérdida; si faltan datos en un periodo, indícalo en vez de estimarlo.";
+
+function tok(t){
+ const piezas=t.match(/[\wáéíóúñüÁÉÍÓÚÑÜ]+|[^\s\w]/g)||[];
+ const out=[];
+ piezas.forEach(p=>{
+  if(p.length<=4){out.push(p);return}
+  for(let i=0;i<p.length;i+=4)out.push(p.slice(i,i+4))});
+ return out}
+
+function draw(){
+ const t=$("txt").value, T=tok(t), n=T.length;
+ const outT=+$("out").value, it=+$("it").value;
+ const [pin,pout]=$("mod").value.split(",").map(Number);
+ $("outV").textContent=outT; $("itV").textContent=it;
+ $("chips").innerHTML=T.slice(0,140).map((x,i)=>
+  `<span style="font:400 12px IBM Plex Mono,monospace;background:${i%2?"#1d3242":"#22384a"};color:#cfe0e7;border-radius:4px;padding:3px 6px">${x.replace(/</g,"&lt;")}</span>`).join("")
+  +(n>140?`<span style="font:400 12px IBM Plex Mono,monospace;color:#8fa3ac;padding:3px 6px">… y ${n-140} más</span>`:"");
+ let ent=0;for(let i=1;i<=it;i++)ent+=n*i+outT*(i-1);
+ const sal=outT*it;
+ const costo=(ent*pin+sal*pout)/1e6;
+ const una=(n*pin+outT*pout)/1e6;
+ $("read").innerHTML=
+  `Tu instrucción son <b>${n} tokens</b> · unas ${Math.round(n*0.75)} palabras.<br>`+
+  `Con ${it} ${it===1?"turno":"turnos"}: <b>${ent.toLocaleString("es")}</b> tokens de entrada acumulados y <b>${sal.toLocaleString("es")}</b> de salida.<br>`+
+  `Coste aproximado: <b>${costo<0.01?"menos de 0.01":costo.toFixed(3)} USD</b>`+
+  (it>1?` · frente a <b>${una.toFixed(3)} USD</b> si lo hubieras resuelto en un solo turno. Multiplica esto por las veces que repitas la tarea al mes.`:` · sube las idas y vueltas para ver cómo se acumula.`)+
+  `<br><span class="pill">precios de referencia, verifica los actuales de tu proveedor</span>`}
+
+$("ex1").onclick=()=>{$("txt").value=EJ1;$("it").value=7;draw()};
+$("ex2").onclick=()=>{$("txt").value=EJ2;$("it").value=1;draw()};
+["txt","out","it","mod"].forEach(i=>{$(i).oninput=draw;$(i).onchange=draw});
+$("txt").value=EJ1;$("it").value=7;draw();
+</script>
+</body>
+</html>

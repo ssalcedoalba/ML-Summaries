@@ -1,0 +1,284 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hiperparámetros</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap');
+:root{
+  --ink:#10202c; --paper:#edefea; --card:#fff; --line:#d6dbd4; --muted:#5d6b72;
+  --amber:#c8760a; --teal:#0f8f82; --indigo:#3f4fbf; --violet:#7a55c7; --red:#ad3a2c;
+  --disp:'Space Grotesk','Segoe UI',sans-serif;
+  --body:'IBM Plex Sans','Segoe UI',Arial,sans-serif;
+  --mono:'IBM Plex Mono','Consolas',monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 var(--body)}
+.wrap{max-width:1060px;margin:0 auto;padding:0 22px 70px}
+a{color:var(--indigo)}
+
+/* ---- cabecera ---- */
+header.top{background:var(--ink);color:#e9eef0;margin-bottom:34px}
+header.top .wrap{padding-top:30px;padding-bottom:34px}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+header.top h1{font:700 clamp(2.1rem,5.4vw,3.5rem)/1.03 var(--disp);margin:14px 0 0;letter-spacing:-.02em}
+header.top .lead{max-width:640px;color:#b9c6cc;margin:14px 0 0;font-size:1.06rem}
+.backlink{display:inline-block;margin-top:24px;font:400 13px/1 var(--mono);color:#8fa3ac;text-decoration:none;border-bottom:1px solid #33475280;padding-bottom:3px}
+.backlink:hover{color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:20px}
+.chip{font:600 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;background:#1d3242;color:#9fc6cd;border-radius:4px;padding:6px 9px}
+
+/* ---- secciones ---- */
+section{margin-top:44px}
+h2{font:700 1.55rem/1.15 var(--disp);margin:0 0 6px;letter-spacing:-.01em}
+h2 .num{font:600 12px/1 var(--mono);color:var(--amber);display:block;letter-spacing:.16em;margin-bottom:9px}
+h3{font:600 1.02rem/1.3 var(--disp);margin:0 0 6px}
+p{margin:10px 0}
+.sub{color:var(--muted);max-width:700px}
+ul{padding-left:18px;margin:8px 0}
+li{margin:5px 0}
+.small{font-size:.88rem;color:var(--muted)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:820px){.g2,.g3{grid-template-columns:1fr}}
+.tick{border-top:4px solid var(--teal)}
+.cross{border-top:4px solid var(--red)}
+.tag{display:inline-block;font:600 11px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;padding:5px 8px;border-radius:4px;background:#e4e9e2;color:#41525a}
+.tag.a{background:#f7ead6;color:#8a5106}.tag.t{background:#dff0ed;color:#0a6960}
+.tag.i{background:#e4e6f8;color:#2f3c96}.tag.v{background:#eee5f8;color:#5b3b98}
+
+.note{border-left:4px solid var(--amber);background:#faf3e8;border-radius:0 10px 10px 0;padding:13px 16px;margin:16px 0}
+.note.t{border-color:var(--teal);background:#e9f5f3}
+.note.r{border-color:var(--red);background:#f9ecea}
+.note strong{font-family:var(--disp)}
+
+table{width:100%;border-collapse:collapse;font-size:.92rem;background:var(--card)}
+th,td{text-align:left;vertical-align:top;padding:11px 12px;border-bottom:1px solid var(--line)}
+th{font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#41525a;background:#e6eae4}
+td code,code{font:600 .88em var(--mono);background:#e6eae4;border-radius:4px;padding:2px 5px}
+.tablebox{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+
+/* ---- consola oscura (elemento firma) ---- */
+.console{background:var(--ink);color:#e9eef0;border-radius:18px;padding:24px;margin-top:16px}
+.console h3{color:#fff;font-size:1.1rem}
+.console .small,.console .sub{color:#93a6ae}
+.console label{display:block;font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#8fa3ac;margin-bottom:7px}
+.controls{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin:18px 0}
+.controls>div{flex:1 1 150px}
+select,input[type=range]{width:100%}
+select{font:400 14px var(--body);padding:8px;border-radius:8px;border:1px solid #33475f;background:#1a2c3a;color:#e9eef0}
+input[type=range]{accent-color:var(--amber);height:26px}
+.btn{font:600 13px var(--body);border:none;border-radius:8px;padding:10px 15px;cursor:pointer;background:var(--amber);color:#12202b}
+.btn:hover{background:#e08b17}
+.btn.ghost{background:transparent;color:#c6d4da;border:1px solid #37505f}
+.btn.ghost:hover{background:#1c2f3d}
+.btn:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.readout{font:400 13px/1.55 var(--mono);background:#0a161f;border:1px solid #23394a;border-radius:10px;padding:12px 14px;margin-top:14px;color:#c7d6dd;min-height:44px}
+.readout b{color:var(--amber);font-weight:600}
+.pill{font:600 11px var(--mono);color:#0a161f;background:#7fd6cb;border-radius:4px;padding:3px 6px}
+
+/* ---- rejillas numéricas (CNN) ---- */
+.cellgrid{display:inline-grid;gap:2px}
+.cell{width:34px;height:30px;display:grid;place-items:center;font:400 11px var(--mono);border-radius:3px;background:#22384a;color:#cfe0e7}
+.cell.win{outline:2px solid var(--amber);z-index:2}
+.cell.cur{background:var(--amber);color:#12202b;font-weight:600}
+.cell.empty{background:#16242f;color:#3d5361}
+@media(max-width:560px){.cell{width:27px;height:25px;font-size:10px}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font:400 12px var(--mono);color:#8fa3ac;margin-top:12px}
+
+/* ---- pie ---- */
+footer{border-top:1px solid var(--line);margin-top:56px;padding-top:20px;color:var(--muted);font-size:.86rem}
+.serie{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:14px}
+@media(max-width:820px){.serie{grid-template-columns:1fr}}
+.serie a{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;text-decoration:none;color:var(--ink)}
+.serie a:hover{border-color:var(--amber)}
+.serie a span{display:block;font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:4px}
+.serie a em{font-style:normal;color:var(--muted);font-size:.86rem}
+.serie a.soon{opacity:.55;pointer-events:none}
+.serie a.soon span{color:var(--muted)}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+@media print{header.top{background:#fff;color:#000}.console{background:#fff;color:#000;border:1px solid #999}.cell{background:#eee;color:#000}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+<p class="eyebrow">Serie IA para energías renovables · Guía 03</p>
+<h1>Hiperparámetros</h1>
+<p class="lead">Tasa de aprendizaje, épocas, batch, dropout: qué mueve cada perilla y qué síntoma deja cuando está mal puesta.</p>
+<div class="chips"><span class="chip">Diseño del modelo</span><span class="chip">Diagnóstico</span><span class="chip">Vale para CNN, LSTM y GAN</span></div>
+<a class="backlink" href="00-indice.html">&larr; Volver al índice de la serie</a>
+</div></header>
+<div class="wrap">
+
+<section>
+<h2><span class="num">01 · La idea</span>Lo que el modelo aprende, y lo que decides tú</h2>
+<div class="grid g2" style="margin-top:14px">
+<div class="card tick"><h3>Parámetros</h3><p class="small">Los pesos de las conexiones. Son millones, no los escribes tú, y el entrenamiento los ajusta solo. Es lo que se guarda cuando guardas el modelo.</p></div>
+<div class="card"><h3>Hiperparámetros</h3><p class="small">Las decisiones que tomas <em>antes</em> de entrenar: cuántas capas, cuánto se corrige en cada paso, cuántas veces repasa los datos. El modelo no las aprende.</p></div>
+</div>
+<div class="note"><strong>La analogía útil:</strong> los parámetros son la masa del pan mientras se hornea. Los hiperparámetros son la temperatura del horno y el tiempo. Con la misma receta y mal horno, el pan sale crudo o quemado, y ninguna cantidad de amasado lo arregla.</div>
+</section>
+
+<section>
+<h2><span class="num">02 · Banco de pruebas</span>Qué hace de verdad la tasa de aprendizaje</h2>
+<p class="sub">Entrenar es bajar una ladera a ciegas buscando el punto más bajo. En cada paso el modelo mide la pendiente y da un paso en la dirección de bajada. La tasa de aprendizaje es el tamaño de ese paso.</p>
+
+<div class="console">
+  <div class="controls">
+    <div><label for="lr">Tasa de aprendizaje · <span id="lrV">0.20</span></label><input type="range" id="lr" min="1" max="200" value="20"></div>
+    <div><label for="ep">Épocas (pasos) · <span id="epV">30</span></label><input type="range" id="ep" min="1" max="60" value="30"></div>
+    <div><label for="st">Punto de inicio · <span id="stV">5.0</span></label><input type="range" id="st" min="-65" max="65" value="50"></div>
+    <div style="flex:0 0 auto;display:flex;gap:8px"><button class="btn" id="run">Entrenar</button><button class="btn ghost" id="rst">Limpiar</button></div>
+  </div>
+  <div id="land"></div>
+  <div class="readout" id="read">Pulsa <b>Entrenar</b> y observa dónde termina la pelota.</div>
+  <div class="legend"><span>Prueba: tasa 0.02 · tasa 0.20 desde +5 · tasa 0.20 desde −3 · tasa 1.60</span></div>
+</div>
+
+<div class="grid g3" style="margin-top:16px">
+<div class="card"><h3>Tasa muy baja</h3><p class="small">Pasos diminutos. Nunca llega, aunque el error baje siempre un poco. Se confunde con «el modelo no sirve» cuando en realidad faltaba tiempo.</p></div>
+<div class="card"><h3>Tasa muy alta</h3><p class="small">Salta por encima del valle y rebota sin estabilizarse. La pérdida sube y baja sin rumbo o se vuelve <code>NaN</code>.</p></div>
+<div class="card"><h3>Mínimo local</h3><p class="small">Se estabiliza en un valle que no es el más profundo. Entrenó bien y la solución es mediocre. Se combate cambiando la inicialización o la tasa.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">03 · La curva</span>El único gráfico que hay que mirar</h2>
+<p class="sub">Dos líneas: el error sobre los datos de entrenamiento (verde) y sobre datos que el modelo nunca vio (naranja). Su forma conjunta te dice qué perilla mover.</p>
+<div class="grid g3" style="margin-top:14px">
+__CURVAS__
+</div>
+<div class="note t"><strong>Y el punto de rendimientos decrecientes:</strong> entre la época 900 y la 1000 la mejora suele ser de la tercera cifra decimal. Entrenar diez veces más para ganar eso casi nunca se justifica. La parada temprana lo resuelve sola.</div>
+</section>
+
+<section>
+<h2><span class="num">04 · Perilla por perilla</span>Qué mueve cada una y qué síntoma deja</h2>
+<div class="tablebox"><table>
+<tr><th style="width:20%">Perilla</th><th>Qué controla</th><th>Si se queda corta</th><th>Si se pasa</th><th style="width:14%">Arranque</th></tr>
+<tr><td><strong>Tasa de aprendizaje</strong></td><td>El tamaño del paso en cada corrección</td><td>Entrena eternamente sin llegar</td><td>Rebota, la pérdida explota o da <code>NaN</code></td><td><code>1e-3 a 1e-4</code></td></tr>
+<tr><td><strong>Épocas</strong></td><td>Cuántas veces repasa todos los datos</td><td>Las dos curvas quedan altas</td><td>Memoriza: validación empieza a subir</td><td><code>100–300</code> + parada temprana</td></tr>
+<tr><td><strong>Batch</strong></td><td>Cuántos ejemplos ve antes de corregirse</td><td>Muy lento, corrección ruidosa</td><td>Poco detalle, puede no caber en memoria</td><td><code>32–128</code></td></tr>
+<tr><td><strong>Capas y unidades</strong></td><td>Capacidad del modelo</td><td>No capta el patrón aunque entrenes más</td><td>Memoriza y entrena lentísimo</td><td><code>1–2</code> capas, <code>32–128</code></td></tr>
+<tr><td><strong>Dropout</strong></td><td>Conexiones que se apagan al azar</td><td>Sobreajuste</td><td>El modelo no llega a aprender</td><td><code>0.2–0.5</code></td></tr>
+<tr><td><strong>Activación</strong></td><td>Qué pasa a la siguiente capa</td><td colspan="2"><code>ReLU</code> en convolucionales · <code>tanh</code> en recurrentes · <code>sigmoid</code> o <code>softmax</code> solo en la salida</td><td>según capa</td></tr>
+<tr><td><strong>Función de pérdida</strong></td><td>Cómo se mide el error</td><td colspan="2"><code>crossentropy</code> si clasificas · <code>MSE</code> o <code>MAE</code> si predices un número</td><td>según tarea</td></tr>
+<tr><td><strong>Optimizador</strong></td><td>El método que aplica las correcciones</td><td colspan="2"><code>Adam</code> funciona bien en casi todo; solo cámbialo con una razón</td><td><code>Adam</code></td></tr>
+</table></div>
+
+<div class="note"><strong>El batch, con la analogía de la linterna:</strong> un haz ancho ilumina toda la pared de una vez pero sin detalle; un haz estrecho ve cada grieta pero tarda mucho más en recorrerla. Batch grande, pasadas rápidas y gruesas. Batch pequeño, correcciones finas y ruidosas.</div>
+</section>
+
+<section>
+<h2><span class="num">05 · Búsqueda</span>Cuando ya no quieres ajustar a mano</h2>
+<p class="sub">Ajustar manualmente sirve para entender. Para trabajar se automatiza, por ejemplo con Keras Tuner. Cuatro estrategias, de la más tonta a la más eficiente.</p>
+<div class="grid g2">
+<div class="card"><span class="tag i">Grid Search</span><h3 style="margin-top:10px">Todas las combinaciones</h3><p class="small">Defines una lista de valores por perilla y prueba todo contra todo. Exhaustivo y exponencial: 4 perillas con 5 valores son 625 entrenamientos. Solo para dos o tres perillas.</p></div>
+<div class="card"><span class="tag i">Random Search</span><h3 style="margin-top:10px">Combinaciones al azar</h3><p class="small">Prueba N combinaciones aleatorias. Suena peor y en la práctica encuentra buenas soluciones antes que Grid, porque no malgasta pruebas en perillas que dan igual.</p></div>
+<div class="card"><span class="tag t">Hyperband</span><h3 style="margin-top:10px">Torneo por eliminación</h3><p class="small">Entrena muchas configuraciones muy pocas épocas, descarta las peores y da más presupuesto a las que sobreviven. La mejor opción cuando no tienes ni idea de por dónde empezar.</p></div>
+<div class="card"><span class="tag v">Optimización bayesiana</span><h3 style="margin-top:10px">Aprende de lo probado</h3><p class="small">Construye un modelo de qué combinaciones prometen y elige la siguiente prueba con eso. La más eficiente cuando cada entrenamiento es caro.</p></div>
+</div>
+<div class="note r"><strong>Antes de buscar hiperparámetros, arregla los datos.</strong> Una búsqueda bayesiana sobre datos mal escalados, con fugas o con clases desbalanceadas encuentra, con mucha elegancia, la mejor manera de equivocarse.</div>
+</section>
+
+<section>
+<h2><span class="num">06 · Trampas</span>Cuatro formas de engañarte a ti mismo</h2>
+<div class="grid g2">
+<div class="card"><h3>Ajustar mirando el test</h3><p class="small">Si eliges hiperparámetros según el resultado en la partición de prueba, esa partición deja de ser prueba. Se necesitan tres: entrenamiento, validación y prueba, y la última se toca una sola vez.</p></div>
+<div class="card"><h3>Mover dos perillas a la vez</h3><p class="small">Si cambias tasa y batch juntos y mejora, no sabes cuál lo hizo. Una por una, anotando el resultado.</p></div>
+<div class="card"><h3>No fijar la semilla</h3><p class="small">Dos entrenamientos idénticos dan resultados distintos por la inicialización aleatoria. Sin semilla fija confundirás ruido con mejora.</p></div>
+<div class="card"><h3>Optimizar la métrica equivocada</h3><p class="small">Exactitud del 97% con el 3% de paneles fallados significa un modelo que nunca detecta una falla. Elige la métrica según lo que cuesta equivocarse.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">07 · Vocabulario</span>Diez palabras y sigues</h2>
+<div class="tablebox"><table>
+<tr><th>Término</th><th>En una línea</th></tr>
+<tr><td><code>parámetro</code></td><td>Peso que el modelo aprende solo durante el entrenamiento.</td></tr>
+<tr><td><code>hiperparámetro</code></td><td>Decisión de diseño que tomas tú antes de entrenar.</td></tr>
+<tr><td><code>época</code></td><td>Una pasada completa por todos los datos de entrenamiento.</td></tr>
+<tr><td><code>iteración</code></td><td>Una corrección de pesos, es decir, un batch procesado.</td></tr>
+<tr><td><code>función de pérdida</code></td><td>Número que mide cuánto se equivoca ahora mismo el modelo.</td></tr>
+<tr><td><code>gradiente</code></td><td>La pendiente: hacia dónde y cuánto hay que corregir.</td></tr>
+<tr><td><code>mínimo local / global</code></td><td>Un valle cualquiera, frente al valle más profundo de todos.</td></tr>
+<tr><td><code>sobreajuste</code></td><td>Acierta en los datos vistos y falla en los nuevos: memorizó.</td></tr>
+<tr><td><code>subajuste</code></td><td>Falla en todo: el modelo es demasiado simple o entrenó poco.</td></tr>
+<tr><td><code>parada temprana</code></td><td>Cortar automáticamente cuando la validación deja de mejorar.</td></tr>
+</table></div>
+</section>
+
+
+<section>
+<h2><span class="num">08 · Sigue</span>Las demás guías de la serie</h2>
+<div class="serie">
+<a href="01-cnn.html"><span>Guía 01</span>Redes convolucionales (CNN)<br><em>Cómo una red aprende a ver una fisura.</em></a>
+<a href="02-lstm.html"><span>Guía 02</span>Redes recurrentes (LSTM)<br><em>Cortar una serie de tiempo en ejemplos de entrenamiento.</em></a>
+<a href="04-datos.html"><span>Guía 04</span>Preparación de datos<br><em>Nulos, atípicos, escalado y fuga de información.</em></a>
+<a href="05-autoencoder.html"><span>Guía 05</span>Autoencoders y U-Net<br><em>Comprimir y reconstruir para detectar lo que no encaja.</em></a>
+<a href="06-gan.html"><span>Guía 06</span>Redes generativas (GAN)<br><em>El falsificador contra la policía.</em></a>
+<a href="07-pinn.html"><span>Guía 07</span>Redes con física (PINN)<br><em>Meter una ley física en la función de pérdida.</em></a>
+<a href="08-arboles.html"><span>Guía 08</span>Random Forest y SVM<br><em>Los modelos que ganan cuando el dato es una tabla.</em></a>
+<a href="09-geneticos.html"><span>Guía 09</span>Algoritmos genéticos<br><em>Optimizar por selección, cruce y mutación.</em></a>
+<a href="10-transformers.html"><span>Guía 10</span>Transformers, LLM y agentes<br><em>Atención, tokens y qué se paga al usar un agente.</em></a>
+</div>
+</section>
+
+<footer>
+<p><a href="index.html">&larr; Todas las explicaciones</a></p>
+<p>Guía de estudio · elaborada a partir de la clase de IA aplicada a energías renovables. Los valores de arranque son puntos de partida, no verdades: se ajustan con tus datos.</p>
+</footer>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const f=x=>0.14*x*x+1.7*Math.sin(1.5*x), g=x=>0.28*x+2.55*Math.cos(1.5*x);
+const X0=-7,X1=7,W=700,H=250;
+const px=x=>20+(x-X0)/(X1-X0)*(W-40), py=v=>H-30-(v+2.6)/12*(H-60);
+let traj=[],anim=null;
+
+function land(){
+ let d="";for(let i=0;i<=280;i++){const x=X0+i*(X1-X0)/280;d+=(i?"L":"M")+px(x).toFixed(1)+" "+py(f(x)).toFixed(1)+" "}
+ let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="Superficie de error y trayectoria del entrenamiento">`;
+ s+=`<path d="${d}" fill="none" stroke="#41616f" stroke-width="2.5"/>`;
+ s+=`<text x="${px(-1)}" y="${py(f(-1))+22}" font-size="11" font-family="IBM Plex Mono,monospace" fill="#7fd6cb" text-anchor="middle">mínimo global</text>`;
+ s+=`<text x="${px(2.92)}" y="${py(f(2.92))+22}" font-size="11" font-family="IBM Plex Mono,monospace" fill="#8fa3ac" text-anchor="middle">mínimo local</text>`;
+ s+=`<text x="${px(-4.85)}" y="${py(f(-4.85))+22}" font-size="11" font-family="IBM Plex Mono,monospace" fill="#8fa3ac" text-anchor="middle">mínimo local</text>`;
+ traj.forEach((x,i)=>{const o=0.18+0.8*i/Math.max(1,traj.length-1);
+   s+=`<circle cx="${px(x).toFixed(1)}" cy="${py(f(x)).toFixed(1)}" r="3.2" fill="#e0a13c" opacity="${o.toFixed(2)}"/>`});
+ if(traj.length){const x=traj[traj.length-1];
+   s+=`<circle cx="${px(x).toFixed(1)}" cy="${py(f(x)).toFixed(1)}" r="7" fill="#e0a13c" stroke="#12202b" stroke-width="2"/>`}
+ s+=`<text x="20" y="${H-8}" font-size="10" font-family="IBM Plex Mono,monospace" fill="#5d7383">combinación de pesos →</text>`;
+ s+=`<text x="${W-20}" y="26" font-size="10" font-family="IBM Plex Mono,monospace" fill="#5d7383" text-anchor="end">↑ error</text></svg>`;
+ $("land").innerHTML=s}
+
+function vals(){return{lr:+$("lr").value/100,ep:+$("ep").value,st:+$("st").value/10}}
+function labels(){const v=vals();$("lrV").textContent=v.lr.toFixed(2);$("epV").textContent=v.ep;$("stV").textContent=v.st.toFixed(1)}
+
+function run(){
+ clearInterval(anim);const v=vals();traj=[v.st];let x=v.st,k=0;
+ anim=setInterval(()=>{
+  if(k++>=v.ep){clearInterval(anim);verdict(v);return}
+  x-=v.lr*g(x); x=Math.max(-7,Math.min(7,x)); traj.push(x); land()},55)}
+
+function verdict(v){
+ const x=traj[traj.length-1], last=traj.slice(-5);
+ const span=Math.max(...last)-Math.min(...last);
+ let msg;
+ if(span>1.2) msg=`<b>Rebota sin estabilizarse.</b> La tasa ${v.lr.toFixed(2)} es demasiado alta: cada paso salta por encima del valle. Bájala.`;
+ else if(Math.abs(g(x))>0.25) msg=`<b>Todavía va bajando.</b> Se quedó a medio camino con ${v.ep} pasos y tasa ${v.lr.toFixed(2)}. Necesita más épocas o una tasa mayor.`;
+ else if(Math.abs(x+1.0)<0.5) msg=`<b>Encontró el mínimo global.</b> Error ${f(x).toFixed(2)}. Esta combinación de tasa, épocas e inicio funcionó.`;
+ else msg=`<b>Cayó en un mínimo local.</b> Error ${f(x).toFixed(2)} frente al ${f(-1).toFixed(2)} del valle más profundo. Entrenó bien y la solución es mediocre: prueba otro punto de inicio u otra tasa.`;
+ $("read").innerHTML=msg+`<br><span class="pill">posición final ${x.toFixed(2)} · ${traj.length-1} pasos dados</span>`}
+
+["lr","ep","st"].forEach(id=>$(id).oninput=()=>{labels()});
+$("run").onclick=run;
+$("rst").onclick=()=>{clearInterval(anim);traj=[];land();$("read").innerHTML="Pulsa <b>Entrenar</b> y observa dónde termina la pelota."};
+labels();land();
+</script>
+</body>
+</html>

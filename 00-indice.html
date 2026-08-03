@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Guías visuales de IA para energías renovables</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap');
+:root{
+  --ink:#10202c; --paper:#edefea; --card:#fff; --line:#d6dbd4; --muted:#5d6b72;
+  --amber:#c8760a; --teal:#0f8f82; --indigo:#3f4fbf; --violet:#7a55c7; --red:#ad3a2c;
+  --disp:'Space Grotesk','Segoe UI',sans-serif;
+  --body:'IBM Plex Sans','Segoe UI',Arial,sans-serif;
+  --mono:'IBM Plex Mono','Consolas',monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 var(--body)}
+.wrap{max-width:1060px;margin:0 auto;padding:0 22px 70px}
+a{color:var(--indigo)}
+
+/* ---- cabecera ---- */
+header.top{background:var(--ink);color:#e9eef0;margin-bottom:34px}
+header.top .wrap{padding-top:30px;padding-bottom:34px}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+header.top h1{font:700 clamp(2.1rem,5.4vw,3.5rem)/1.03 var(--disp);margin:14px 0 0;letter-spacing:-.02em}
+header.top .lead{max-width:640px;color:#b9c6cc;margin:14px 0 0;font-size:1.06rem}
+.backlink{display:inline-block;margin-top:24px;font:400 13px/1 var(--mono);color:#8fa3ac;text-decoration:none;border-bottom:1px solid #33475280;padding-bottom:3px}
+.backlink:hover{color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:20px}
+.chip{font:600 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;background:#1d3242;color:#9fc6cd;border-radius:4px;padding:6px 9px}
+
+/* ---- secciones ---- */
+section{margin-top:44px}
+h2{font:700 1.55rem/1.15 var(--disp);margin:0 0 6px;letter-spacing:-.01em}
+h2 .num{font:600 12px/1 var(--mono);color:var(--amber);display:block;letter-spacing:.16em;margin-bottom:9px}
+h3{font:600 1.02rem/1.3 var(--disp);margin:0 0 6px}
+p{margin:10px 0}
+.sub{color:var(--muted);max-width:700px}
+ul{padding-left:18px;margin:8px 0}
+li{margin:5px 0}
+.small{font-size:.88rem;color:var(--muted)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:820px){.g2,.g3{grid-template-columns:1fr}}
+.tick{border-top:4px solid var(--teal)}
+.cross{border-top:4px solid var(--red)}
+.tag{display:inline-block;font:600 11px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;padding:5px 8px;border-radius:4px;background:#e4e9e2;color:#41525a}
+.tag.a{background:#f7ead6;color:#8a5106}.tag.t{background:#dff0ed;color:#0a6960}
+.tag.i{background:#e4e6f8;color:#2f3c96}.tag.v{background:#eee5f8;color:#5b3b98}
+
+.note{border-left:4px solid var(--amber);background:#faf3e8;border-radius:0 10px 10px 0;padding:13px 16px;margin:16px 0}
+.note.t{border-color:var(--teal);background:#e9f5f3}
+.note.r{border-color:var(--red);background:#f9ecea}
+.note strong{font-family:var(--disp)}
+
+table{width:100%;border-collapse:collapse;font-size:.92rem;background:var(--card)}
+th,td{text-align:left;vertical-align:top;padding:11px 12px;border-bottom:1px solid var(--line)}
+th{font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#41525a;background:#e6eae4}
+td code,code{font:600 .88em var(--mono);background:#e6eae4;border-radius:4px;padding:2px 5px}
+.tablebox{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+
+/* ---- consola oscura (elemento firma) ---- */
+.console{background:var(--ink);color:#e9eef0;border-radius:18px;padding:24px;margin-top:16px}
+.console h3{color:#fff;font-size:1.1rem}
+.console .small,.console .sub{color:#93a6ae}
+.console label{display:block;font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#8fa3ac;margin-bottom:7px}
+.controls{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin:18px 0}
+.controls>div{flex:1 1 150px}
+select,input[type=range]{width:100%}
+select{font:400 14px var(--body);padding:8px;border-radius:8px;border:1px solid #33475f;background:#1a2c3a;color:#e9eef0}
+input[type=range]{accent-color:var(--amber);height:26px}
+.btn{font:600 13px var(--body);border:none;border-radius:8px;padding:10px 15px;cursor:pointer;background:var(--amber);color:#12202b}
+.btn:hover{background:#e08b17}
+.btn.ghost{background:transparent;color:#c6d4da;border:1px solid #37505f}
+.btn.ghost:hover{background:#1c2f3d}
+.btn:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.readout{font:400 13px/1.55 var(--mono);background:#0a161f;border:1px solid #23394a;border-radius:10px;padding:12px 14px;margin-top:14px;color:#c7d6dd;min-height:44px}
+.readout b{color:var(--amber);font-weight:600}
+.pill{font:600 11px var(--mono);color:#0a161f;background:#7fd6cb;border-radius:4px;padding:3px 6px}
+
+/* ---- rejillas numéricas (CNN) ---- */
+.cellgrid{display:inline-grid;gap:2px}
+.cell{width:34px;height:30px;display:grid;place-items:center;font:400 11px var(--mono);border-radius:3px;background:#22384a;color:#cfe0e7}
+.cell.win{outline:2px solid var(--amber);z-index:2}
+.cell.cur{background:var(--amber);color:#12202b;font-weight:600}
+.cell.empty{background:#16242f;color:#3d5361}
+@media(max-width:560px){.cell{width:27px;height:25px;font-size:10px}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font:400 12px var(--mono);color:#8fa3ac;margin-top:12px}
+
+/* ---- pie ---- */
+footer{border-top:1px solid var(--line);margin-top:56px;padding-top:20px;color:var(--muted);font-size:.86rem}
+.serie{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:14px}
+@media(max-width:820px){.serie{grid-template-columns:1fr}}
+.serie a{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;text-decoration:none;color:var(--ink)}
+.serie a:hover{border-color:var(--amber)}
+.serie a span{display:block;font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:4px}
+.serie a em{font-style:normal;color:var(--muted);font-size:.86rem}
+.serie a.soon{opacity:.55;pointer-events:none}
+.serie a.soon span{color:var(--muted)}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+@media print{header.top{background:#fff;color:#000}.console{background:#fff;color:#000;border:1px solid #999}.cell{background:#eee;color:#000}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+<p class="eyebrow">Serie IA para energías renovables</p>
+<h1>Guías visuales de IA para energías renovables</h1>
+<p class="lead">Una guía por tema: qué es, cómo funciona visualmente, cuándo usarlo y cuándo no. Sin entrar en la matemática, con un banco de pruebas interactivo en cada una.</p>
+<div class="chips"><span class="chip">10 guías completas</span><span class="chip">Interactivas</span><span class="chip">Español</span><span class="chip">Se abren sin internet</span></div>
+
+</div></header>
+<div class="wrap">
+
+<section>
+<h2><span class="num">Cómo está armada</span>Todas las guías tienen la misma estructura</h2>
+<p class="sub">La idea es que puedas saltar a la sección que necesitas sin leer la guía entera, y que al abrir la siguiente ya sepas dónde está cada cosa.</p>
+<div class="grid g3" style="margin-top:14px">
+<div class="card"><span class="tag a">Entender</span><h3 style="margin-top:10px">La idea + banco de pruebas</h3><p class="small">Una explicación en lenguaje llano y un widget interactivo donde el concepto se mueve. Sin ecuaciones.</p></div>
+<div class="card"><span class="tag t">Decidir</span><h3 style="margin-top:10px">Cuándo sí y cuándo no</h3><p class="small">La parte que casi nunca se enseña: en qué casos ese modelo es la herramienta equivocada.</p></div>
+<div class="card"><span class="tag i">Aplicar</span><h3 style="margin-top:10px">Casos, ajustes y trampas</h3><p class="small">Ejemplos en solar, eólica e hidrógeno, valores de arranque y los errores que arruinan un modelo que «funcionaba».</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">Atajo</span>Si necesitas esto, ve a esta guía</h2>
+<div class="tablebox"><table>
+<tr><th style="width:46%">Lo que quieres hacer</th><th>Guía</th></tr>
+<tr><td>Clasificar imágenes, detectar fisuras o puntos calientes</td><td><a href="01-cnn.html">01 · Redes convolucionales</a></td></tr>
+<tr><td>Predecir generación, demanda o viento a futuro</td><td><a href="02-lstm.html">02 · Redes recurrentes LSTM</a></td></tr>
+<tr><td>El modelo entrena pero no mejora, o memoriza</td><td><a href="03-hiperparametros.html">03 · Hiperparámetros</a></td></tr>
+<tr><td>Tus datos tienen huecos, atípicos o clases desbalanceadas</td><td><a href="04-datos.html">04 · Preparación de datos</a></td></tr>
+<tr><td>Detectar comportamiento anómalo sin ejemplos de falla</td><td><a href="05-autoencoder.html">05 · Autoencoders y U-Net</a></td></tr>
+<tr><td>Generar datos sintéticos o escenarios nuevos</td><td><a href="06-gan.html">06 · Redes generativas GAN</a></td></tr>
+<tr><td>Modelar un fenómeno físico con pocos datos</td><td><a href="07-pinn.html">07 · Redes con física PINN</a></td></tr>
+<tr><td>Predecir a partir de una tabla y poder explicar por qué</td><td><a href="08-arboles.html">08 · Random Forest y SVM</a></td></tr>
+<tr><td>Elegir tamaño, ubicación o despacho óptimo</td><td><a href="09-geneticos.html">09 · Algoritmos genéticos</a></td></tr>
+<tr><td>Entender qué hay debajo de un agente o un LLM</td><td><a href="10-transformers.html">10 · Transformers y agentes</a></td></tr>
+</table></div>
+</section>
+
+<section>
+<h2><span class="num">La serie</span>Diez temas</h2>
+<div class="serie">
+<a href="01-cnn.html"><span>Guía 01 · lista</span>Redes convolucionales (CNN)<br><em>Cómo una red aprende a ver una fisura.</em></a>
+<a href="02-lstm.html"><span>Guía 02 · lista</span>Redes recurrentes (LSTM)<br><em>Cortar una serie de tiempo en ejemplos de entrenamiento.</em></a>
+<a href="03-hiperparametros.html"><span>Guía 03 · lista</span>Hiperparámetros<br><em>Qué mueve cada perilla y qué síntoma deja.</em></a>
+<a href="04-datos.html"><span>Guía 04 · lista</span>Preparación de datos<br><em>Nulos, atípicos, escalado y fuga de información.</em></a>
+<a href="05-autoencoder.html"><span>Guía 05 · lista</span>Autoencoders y U-Net<br><em>Comprimir y reconstruir para detectar lo que no encaja.</em></a>
+<a href="06-gan.html"><span>Guía 06 · lista</span>Redes generativas (GAN)<br><em>El falsificador contra la policía.</em></a>
+<a href="07-pinn.html"><span>Guía 07 · lista</span>Redes con física (PINN)<br><em>Meter una ley física en la función de pérdida.</em></a>
+<a href="08-arboles.html"><span>Guía 08 · lista</span>Random Forest y SVM<br><em>Los modelos que ganan cuando el dato es una tabla.</em></a>
+<a href="09-geneticos.html"><span>Guía 09 · lista</span>Algoritmos genéticos<br><em>Optimizar por selección, cruce y mutación.</em></a>
+<a href="10-transformers.html"><span>Guía 10 · lista</span>Transformers, LLM y agentes<br><em>Atención, tokens y qué se paga al usar un agente.</em></a>
+</div>
+</section>
+
+<section>
+<h2><span class="num">Precisión</span>Cuatro cosas que conviene tener claras</h2>
+<p class="sub">Puntos donde el vocabulario suele mezclarse. Vale la pena fijarlos ahora para que el resto de la serie se lea sin ruido.</p>
+<div class="grid g2">
+<div class="card"><h3>Parámetro ≠ token</h3><p class="small">Un <strong>parámetro</strong> es un peso que el modelo aprende y guarda. Un <strong>token</strong> es un trozo de texto, más o menos una palabra, y es la unidad con la que se mide lo que envías y recibes de un modelo. Un modelo tiene parámetros; una conversación consume tokens.</p></div>
+<div class="card"><h3>Billion no es billón</h3><p class="small">En inglés <em>billion</em> son mil millones y <em>trillion</em> es un billón español. GPT-3 tuvo unos 175 mil millones de parámetros, no «150 billones». Casi todas las cifras enormes que circulan arrastran este cambio de escala.</p></div>
+<div class="card"><h3>Fechas de las arquitecturas</h3><p class="small">Las GAN se publicaron en 2014 (Goodfellow), no en 2019. LSTM es <em>Long Short-Term Memory</em>, de 1997. Ninguna es reciente: lo reciente es que ahora hay datos y cómputo para usarlas.</p></div>
+<div class="card"><h3>Entrenar ≠ usar</h3><p class="small">Entrenar un modelo grande cuesta meses y millones. Usarlo o afinarlo sobre uno ya entrenado cuesta minutos. Cuando alguien dice «entrené un modelo», casi siempre significa lo segundo, y está bien.</p></div>
+</div>
+</section>
+
+<footer>
+<p><a href="index.html">&larr; Todas las explicaciones</a></p>
+<p>Guía de estudio · elaborada a partir de la clase de IA aplicada a energías renovables. Los valores de arranque son puntos de partida, no verdades: se ajustan con tus datos.</p>
+</footer>
+</div>
+<script></script>
+</body>
+</html>

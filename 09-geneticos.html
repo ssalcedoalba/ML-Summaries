@@ -1,0 +1,309 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Algoritmos genéticos</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap');
+:root{
+  --ink:#10202c; --paper:#edefea; --card:#fff; --line:#d6dbd4; --muted:#5d6b72;
+  --amber:#c8760a; --teal:#0f8f82; --indigo:#3f4fbf; --violet:#7a55c7; --red:#ad3a2c;
+  --disp:'Space Grotesk','Segoe UI',sans-serif;
+  --body:'IBM Plex Sans','Segoe UI',Arial,sans-serif;
+  --mono:'IBM Plex Mono','Consolas',monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 var(--body)}
+.wrap{max-width:1060px;margin:0 auto;padding:0 22px 70px}
+a{color:var(--indigo)}
+
+/* ---- cabecera ---- */
+header.top{background:var(--ink);color:#e9eef0;margin-bottom:34px}
+header.top .wrap{padding-top:30px;padding-bottom:34px}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+header.top h1{font:700 clamp(2.1rem,5.4vw,3.5rem)/1.03 var(--disp);margin:14px 0 0;letter-spacing:-.02em}
+header.top .lead{max-width:640px;color:#b9c6cc;margin:14px 0 0;font-size:1.06rem}
+.backlink{display:inline-block;margin-top:24px;font:400 13px/1 var(--mono);color:#8fa3ac;text-decoration:none;border-bottom:1px solid #33475280;padding-bottom:3px}
+.backlink:hover{color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:20px}
+.chip{font:600 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;background:#1d3242;color:#9fc6cd;border-radius:4px;padding:6px 9px}
+
+/* ---- secciones ---- */
+section{margin-top:44px}
+h2{font:700 1.55rem/1.15 var(--disp);margin:0 0 6px;letter-spacing:-.01em}
+h2 .num{font:600 12px/1 var(--mono);color:var(--amber);display:block;letter-spacing:.16em;margin-bottom:9px}
+h3{font:600 1.02rem/1.3 var(--disp);margin:0 0 6px}
+p{margin:10px 0}
+.sub{color:var(--muted);max-width:700px}
+ul{padding-left:18px;margin:8px 0}
+li{margin:5px 0}
+.small{font-size:.88rem;color:var(--muted)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:820px){.g2,.g3{grid-template-columns:1fr}}
+.tick{border-top:4px solid var(--teal)}
+.cross{border-top:4px solid var(--red)}
+.tag{display:inline-block;font:600 11px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;padding:5px 8px;border-radius:4px;background:#e4e9e2;color:#41525a}
+.tag.a{background:#f7ead6;color:#8a5106}.tag.t{background:#dff0ed;color:#0a6960}
+.tag.i{background:#e4e6f8;color:#2f3c96}.tag.v{background:#eee5f8;color:#5b3b98}
+
+.note{border-left:4px solid var(--amber);background:#faf3e8;border-radius:0 10px 10px 0;padding:13px 16px;margin:16px 0}
+.note.t{border-color:var(--teal);background:#e9f5f3}
+.note.r{border-color:var(--red);background:#f9ecea}
+.note strong{font-family:var(--disp)}
+
+table{width:100%;border-collapse:collapse;font-size:.92rem;background:var(--card)}
+th,td{text-align:left;vertical-align:top;padding:11px 12px;border-bottom:1px solid var(--line)}
+th{font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#41525a;background:#e6eae4}
+td code,code{font:600 .88em var(--mono);background:#e6eae4;border-radius:4px;padding:2px 5px}
+.tablebox{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+
+/* ---- consola oscura (elemento firma) ---- */
+.console{background:var(--ink);color:#e9eef0;border-radius:18px;padding:24px;margin-top:16px}
+.console h3{color:#fff;font-size:1.1rem}
+.console .small,.console .sub{color:#93a6ae}
+.console label{display:block;font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#8fa3ac;margin-bottom:7px}
+.controls{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin:18px 0}
+.controls>div{flex:1 1 150px}
+select,input[type=range]{width:100%}
+select{font:400 14px var(--body);padding:8px;border-radius:8px;border:1px solid #33475f;background:#1a2c3a;color:#e9eef0}
+input[type=range]{accent-color:var(--amber);height:26px}
+.btn{font:600 13px var(--body);border:none;border-radius:8px;padding:10px 15px;cursor:pointer;background:var(--amber);color:#12202b}
+.btn:hover{background:#e08b17}
+.btn.ghost{background:transparent;color:#c6d4da;border:1px solid #37505f}
+.btn.ghost:hover{background:#1c2f3d}
+.btn:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.readout{font:400 13px/1.55 var(--mono);background:#0a161f;border:1px solid #23394a;border-radius:10px;padding:12px 14px;margin-top:14px;color:#c7d6dd;min-height:44px}
+.readout b{color:var(--amber);font-weight:600}
+.pill{font:600 11px var(--mono);color:#0a161f;background:#7fd6cb;border-radius:4px;padding:3px 6px}
+
+/* ---- rejillas numéricas (CNN) ---- */
+.cellgrid{display:inline-grid;gap:2px}
+.cell{width:34px;height:30px;display:grid;place-items:center;font:400 11px var(--mono);border-radius:3px;background:#22384a;color:#cfe0e7}
+.cell.win{outline:2px solid var(--amber);z-index:2}
+.cell.cur{background:var(--amber);color:#12202b;font-weight:600}
+.cell.empty{background:#16242f;color:#3d5361}
+@media(max-width:560px){.cell{width:27px;height:25px;font-size:10px}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font:400 12px var(--mono);color:#8fa3ac;margin-top:12px}
+
+/* ---- pie ---- */
+footer{border-top:1px solid var(--line);margin-top:56px;padding-top:20px;color:var(--muted);font-size:.86rem}
+.serie{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:14px}
+@media(max-width:820px){.serie{grid-template-columns:1fr}}
+.serie a{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;text-decoration:none;color:var(--ink)}
+.serie a:hover{border-color:var(--amber)}
+.serie a span{display:block;font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:4px}
+.serie a em{font-style:normal;color:var(--muted);font-size:.86rem}
+.serie a.soon{opacity:.55;pointer-events:none}
+.serie a.soon span{color:var(--muted)}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+@media print{header.top{background:#fff;color:#000}.console{background:#fff;color:#000;border:1px solid #999}.cell{background:#eee;color:#000}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+<p class="eyebrow">Serie IA para energías renovables · Guía 09</p>
+<h1>Algoritmos genéticos</h1>
+<p class="lead">Optimizar por selección, cruce y mutación cuando no hay fórmula que derivar y sí demasiadas combinaciones que probar.</p>
+<div class="chips"><span class="chip">Optimización</span><span class="chip">Diseño y despacho</span><span class="chip">No es una red neuronal</span></div>
+<a class="backlink" href="00-indice.html">&larr; Volver al índice de la serie</a>
+</div></header>
+<div class="wrap">
+
+<section>
+<h2><span class="num">01 · La idea</span>Esto no es una red neuronal</h2>
+<p class="sub">Un algoritmo genético no aprende de datos ni ajusta pesos. Copia el mecanismo de la evolución: genera muchas soluciones candidatas, se queda con las mejores, las combina entre sí y las muta. Repite unas cuantas generaciones.</p>
+<div class="grid g2" style="margin-top:14px">
+<div class="card"><h3>Qué necesita</h3><p class="small">Una forma de <strong>codificar</strong> una solución como una lista de números, y una función que le dé una <strong>puntuación</strong>. Nada más. No necesita derivadas ni datos históricos.</p></div>
+<div class="card"><h3>Para qué sirve</h3><p class="small">Para <strong>optimizar</strong>: elegir la mejor combinación de decisiones. Cuántos paneles, qué inclinación, dónde va cada aerogenerador, cuándo carga la batería.</p></div>
+</div>
+<div class="note"><strong>La diferencia con la guía 03:</strong> el descenso por gradiente es un explorador solitario que sigue la pendiente hacia abajo, y por eso cae en el primer valle que encuentra. Aquí hay una población entera repartida por el terreno, así que hay más posibilidades de que alguien esté cerca del óptimo de verdad.</div>
+</section>
+
+<section>
+<h2><span class="num">02 · Banco de pruebas</span>Evoluciona una población</h2>
+<p class="sub">La curva es la aptitud: cuánto vale cada solución posible. Los puntos son la población actual. Hay dos picos secundarios y uno que es el mejor de todos.</p>
+
+<div class="console">
+  <div class="controls">
+    <div><label for="mut">Tasa de mutación · <span id="mutV">0.30</span></label><input type="range" id="mut" min="0" max="100" value="30"></div>
+    <div><label for="pop">Tamaño de la población · <span id="popV">12</span></label><input type="range" id="pop" min="4" max="30" step="2" value="12"></div>
+    <div style="flex:0 0 auto;display:flex;gap:8px">
+      <button class="btn" id="one">Una generación</button>
+      <button class="btn ghost" id="auto">Evolucionar</button>
+      <button class="btn ghost" id="rst">Reiniciar</button>
+    </div>
+  </div>
+  <div id="plot"></div>
+  <div class="readout" id="read"></div>
+  <div class="legend"><span style="color:#e0a13c">● individuo de la población</span><span>línea = aptitud de cada solución posible</span></div>
+</div>
+
+<div class="grid g3" style="margin-top:16px">
+<div class="card"><h3>Mutación baja</h3><p class="small">La población entera colapsa sobre el pico más cercano y se queda ahí para siempre. Nunca llega a descubrir que al otro lado del valle hay algo mejor.</p></div>
+<div class="card"><h3>Mutación media-alta</h3><p class="small">Aparecen exploradores capaces de cruzar el valle. En cuanto uno cae en el pico alto, el cruce arrastra al resto en pocas generaciones.</p></div>
+<div class="card"><h3>Mutación al máximo</h3><p class="small">Encuentra el pico, pero la población nunca se asienta: la mitad de los individuos anda perdida. Es búsqueda aleatoria con pasos de más.</p></div>
+</div>
+<div class="note t"><strong>El elitismo:</strong> conviene copiar tal cual el mejor individuo a la generación siguiente. Sin eso, un buen resultado puede perderse en un cruce desafortunado y la población empeora de una generación a otra.</div>
+</section>
+
+<section>
+<h2><span class="num">04 · Cuándo</span>Cuándo sí y cuándo no</h2>
+<div class="grid g2">
+<div class="card tick">
+<h3>Úsalo cuando…</h3>
+<ul>
+<li>El problema es de <strong>optimización</strong> con muchas combinaciones posibles y no puedes probarlas todas.</li>
+<li>La función a optimizar es una <strong>caja negra</strong>: un simulador que devuelve un número, sin fórmula derivable.</li>
+<li>Mezclas variables <strong>continuas y discretas</strong>: inclinación en grados y número entero de módulos, a la vez.</li>
+<li>Hay <strong>restricciones duras</strong>: presupuesto, superficie, potencia máxima de conexión.</li>
+<li>Hay <strong>varios objetivos en conflicto</strong>: máxima producción y mínimo coste. Las variantes multiobjetivo devuelven el abanico completo de compromisos.</li>
+</ul>
+</div>
+<div class="card cross">
+<h3>No lo uses cuando…</h3>
+<ul>
+<li>Lo que quieres es <strong>predecir o clasificar</strong>. Eso no es optimizar; ve a las guías 01, 02 u 08.</li>
+<li>Existe un método clásico para tu problema. Si es lineal, la programación lineal da el óptimo exacto y en un instante.</li>
+<li>Cada evaluación de aptitud tarda horas. Miles de evaluaciones se vuelven inviables.</li>
+<li>Necesitas garantía de óptimo global. Un algoritmo genético da una solución muy buena, no una demostración.</li>
+</ul>
+</div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">05 · Aplicación</span>En energías renovables</h2>
+<div class="grid g3">
+<div class="card"><span class="tag t">Eólica</span><h3 style="margin-top:10px">Disposición del parque</h3><p class="small">Dónde colocar cada aerogenerador para maximizar producción minimizando el efecto estela. El espacio de combinaciones es enorme y la aptitud es un simulador: el caso de manual.</p></div>
+<div class="card"><span class="tag a">Solar</span><h3 style="margin-top:10px">Dimensionado híbrido</h3><p class="small">Número de módulos, inversor, capacidad de batería y estrategia de carga, optimizando coste nivelado con restricción de superficie y de conexión.</p></div>
+<div class="card"><span class="tag i">Modelado</span><h3 style="margin-top:10px">Selección de variables</h3><p class="small">Usar el algoritmo genético para elegir qué subconjunto de variables alimenta a una red neuronal. Optimizas primero los datos, y después entrenas.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">06 · Ajustes</span>Valores de arranque</h2>
+<div class="tablebox"><table>
+<tr><th>Ajuste</th><th>Arranque</th><th>Qué significa</th></tr>
+<tr><td>Tamaño de población</td><td><code>50 – 200</code></td><td>Más población explora mejor y cuesta proporcionalmente más evaluaciones.</td></tr>
+<tr><td>Generaciones</td><td><code>50 – 500</code></td><td>Se para cuando el mejor individuo no mejora en N generaciones seguidas.</td></tr>
+<tr><td>Probabilidad de cruce</td><td><code>0.7 – 0.9</code></td><td>Cuántas parejas producen descendencia mezclada.</td></tr>
+<tr><td>Probabilidad de mutación</td><td><code>0.01 – 0.1</code></td><td>La perilla delicada: demasiada y es búsqueda aleatoria; ninguna y converge antes de tiempo.</td></tr>
+<tr><td>Elitismo</td><td><code>1 – 5</code> individuos</td><td>Los mejores pasan intactos a la siguiente generación.</td></tr>
+<tr><td>Selección</td><td>por torneo</td><td>Se enfrentan grupos pequeños al azar y gana el mejor de cada grupo. Mantiene más variedad que elegir siempre a los primeros.</td></tr>
+<tr><td>Restricciones</td><td>penalización</td><td>Una solución que viola un límite recibe una aptitud muy baja en lugar de descartarse.</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2><span class="num">07 · Trampas</span>Dónde falla</h2>
+<div class="grid g2">
+<div class="card"><h3>Convergencia prematura</h3><p class="small">A las pocas generaciones toda la población es casi idéntica y el algoritmo deja de avanzar. Se combate subiendo la mutación, la población o usando selección por torneo.</p></div>
+<div class="card"><h3>Función de aptitud mal formulada</h3><p class="small">El algoritmo optimiza exactamente lo que escribiste, incluidos los atajos que no previste. Si solo premias producción, te devolverá un diseño que no cabe en el terreno.</p></div>
+<div class="card"><h3>Coste computacional</h3><p class="small">200 individuos por 300 generaciones son 60 000 evaluaciones. Si cada una es una simulación de un minuto, son 40 días. Antes de lanzarlo, multiplica.</p></div>
+<div class="card"><h3>Resultados irrepetibles</h3><p class="small">Dos ejecuciones dan soluciones distintas. Fija la semilla y ejecuta varias veces: si todas convergen a lo mismo, puedes confiar.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">08 · Vocabulario</span>Nueve palabras y sigues</h2>
+<div class="tablebox"><table>
+<tr><th>Término</th><th>En una línea</th></tr>
+<tr><td><code>individuo</code></td><td>Una solución candidata completa.</td></tr>
+<tr><td><code>población</code></td><td>El conjunto de soluciones que compiten en una generación.</td></tr>
+<tr><td><code>gen / cromosoma</code></td><td>Cada valor de la solución, y la lista completa.</td></tr>
+<tr><td><code>función de aptitud</code></td><td>Lo que mide si una solución es buena. Tú la escribes.</td></tr>
+<tr><td><code>selección</code></td><td>Quién pasa a reproducirse.</td></tr>
+<tr><td><code>cruce</code></td><td>Combinar dos soluciones para producir una nueva.</td></tr>
+<tr><td><code>mutación</code></td><td>Alterar un valor al azar para explorar terreno nuevo.</td></tr>
+<tr><td><code>elitismo</code></td><td>Conservar intacto al mejor individuo.</td></tr>
+<tr><td><code>frente de Pareto</code></td><td>El conjunto de soluciones donde mejorar un objetivo empeora otro.</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2><span class="num">09 · Sigue</span>Las demás guías de la serie</h2>
+<div class="serie">
+<a href="01-cnn.html"><span>Guía 01</span>Redes convolucionales (CNN)<br><em>Cómo una red aprende a ver una fisura.</em></a>
+<a href="02-lstm.html"><span>Guía 02</span>Redes recurrentes (LSTM)<br><em>Cortar una serie de tiempo en ejemplos de entrenamiento.</em></a>
+<a href="03-hiperparametros.html"><span>Guía 03</span>Hiperparámetros<br><em>Qué mueve cada perilla y qué síntoma deja.</em></a>
+<a href="04-datos.html"><span>Guía 04</span>Preparación de datos<br><em>Nulos, atípicos, escalado y fuga de información.</em></a>
+<a href="05-autoencoder.html"><span>Guía 05</span>Autoencoders y U-Net<br><em>Comprimir y reconstruir para detectar lo que no encaja.</em></a>
+<a href="06-gan.html"><span>Guía 06</span>Redes generativas (GAN)<br><em>El falsificador contra la policía.</em></a>
+<a href="07-pinn.html"><span>Guía 07</span>Redes con física (PINN)<br><em>Meter una ley física en la función de pérdida.</em></a>
+<a href="08-arboles.html"><span>Guía 08</span>Random Forest y SVM<br><em>Los modelos que ganan cuando el dato es una tabla.</em></a>
+<a href="10-transformers.html"><span>Guía 10</span>Transformers, LLM y agentes<br><em>Atención, tokens y qué se paga al usar un agente.</em></a>
+</div>
+</section>
+
+<footer>
+<p><a href="index.html">&larr; Todas las explicaciones</a></p>
+<p>Guía de estudio · elaborada a partir de la clase de IA aplicada a energías renovables. Los valores de arranque son puntos de partida, no verdades: se ajustan con tus datos.</p>
+</footer>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const X0=-6,X1=10;
+const fit=x=>Math.exp(-((x+1)**2)/2.2)+0.74*Math.exp(-((x-4)**2)/2)+0.5*Math.exp(-((x-8)**2)/1.4);
+let pop=[],gen=0,timer=null,seed=7;
+const rnd=()=>{seed=(seed*1664525+1013904223)%4294967296;return seed/4294967296};
+function reset(){gen=0;clearInterval(timer);timer=null;seed=7;
+ pop=Array.from({length:+$("pop").value},()=>2+rnd()*8);draw()}
+
+function step(){
+ const s=+$("mut").value/100*5, N=+$("pop").value;
+ while(pop.length<N)pop.push(2+rnd()*8);
+ pop=pop.slice(0,N);
+ const vivos=[pop.slice().sort((a,b)=>fit(b)-fit(a))[0]];
+ while(vivos.length<Math.max(2,Math.round(N/2))){
+  const a=pop[Math.floor(rnd()*pop.length)], b=pop[Math.floor(rnd()*pop.length)];
+  vivos.push(fit(a)>=fit(b)?a:b)}
+ const hijos=[vivos[0]];
+ while(hijos.length<N){
+  const a=vivos[Math.floor(rnd()*vivos.length)], b=vivos[Math.floor(rnd()*vivos.length)];
+  let h=(a+b)/2+(rnd()-0.5)*0.35;
+  if(rnd()<0.6)h+=(rnd()-0.5)*2*s;
+  hijos.push(Math.max(X0,Math.min(X1,h)))}
+ pop=hijos;gen++;draw()}
+
+function draw(){
+ const W=700,H=230,x0=24,yb=185,sy=140;
+ const X=x=>x0+(x-X0)/(X1-X0)*(W-x0-16), Y=v=>yb-v*sy;
+ let d="";for(let i=0;i<=300;i++){const x=X0+i*(X1-X0)/300;d+=(i?"L":"M")+X(x).toFixed(1)+" "+Y(fit(x)).toFixed(1)+" "}
+ let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="Población sobre el paisaje de aptitud">`;
+ s+=`<path d="${d}" fill="none" stroke="#41616f" stroke-width="2.5"/>`;
+ s+=`<line x1="${x0}" y1="${yb}" x2="${W-14}" y2="${yb}" stroke="#2b4152"/>`;
+ s+=`<text x="${X(-1)}" y="${Y(1)-12}" font-size="11" font-family="IBM Plex Mono,monospace" fill="#7fd6cb" text-anchor="middle">óptimo global</text>`;
+ s+=`<text x="${X(4)}" y="${Y(0.74)-12}" font-size="11" font-family="IBM Plex Mono,monospace" fill="#7f97a3" text-anchor="middle">óptimo local</text>`;
+ s+=`<text x="${X(8)}" y="${Y(0.5)-12}" font-size="11" font-family="IBM Plex Mono,monospace" fill="#7f97a3" text-anchor="middle">óptimo local</text>`;
+ pop.forEach(x=>{s+=`<circle cx="${X(x).toFixed(1)}" cy="${Y(fit(x)).toFixed(1)}" r="5" fill="#e0a13c" opacity=".85" stroke="#12202b"/>`});
+ s+=`<text x="${x0}" y="${H-8}" font-size="10" font-family="IBM Plex Mono,monospace" fill="#5d7383">todas las soluciones posibles →</text>`;
+ s+=`<text x="${W-14}" y="26" font-size="11" font-family="IBM Plex Mono,monospace" fill="#5d7383" text-anchor="end">generación ${gen}</text></svg>`;
+ $("plot").innerHTML=s;
+ const fs=pop.map(fit), best=Math.max(...fs), med=fs.reduce((a,b)=>a+b,0)/fs.length;
+ const disp=Math.max(...pop)-Math.min(...pop);
+ const cerca=pop.filter(x=>Math.abs(x+1)<1).length;
+ let m;
+ if(gen===0)m="Población inicial repartida por la mitad derecha del terreno. El pico más alto está al otro lado de un valle y nadie está cerca todavía.";
+ else if(disp>7)m="<b>Demasiada mutación.</b> La población no se asienta en ninguna zona: cada generación vuelve a repartirse. Esto ya no es evolución, es búsqueda aleatoria.";
+ else if(disp<1.2&&cerca===0)m="<b>Convergencia prematura.</b> Toda la población colapsó sobre un óptimo local y ya no queda variedad para salir de ahí. Sube la mutación y reinicia.";
+ else if(cerca>pop.length*0.5)m="<b>Encontró el óptimo global.</b> La mayoría de la población está en el pico más alto, y todavía quedan individuos explorando por fuera.";
+ else m="<b>Evolucionando.</b> Los mejores se reproducen y arrastran a la población hacia las zonas altas; la mutación mantiene exploradores repartidos.";
+ $("read").innerHTML=`Generación <b>${gen}</b> · mejor aptitud <b>${best.toFixed(3)}</b> · media <b>${med.toFixed(3)}</b> · dispersión <b>${disp.toFixed(1)}</b><br>${m}`}
+
+$("one").onclick=step;
+$("auto").onclick=()=>{if(timer){clearInterval(timer);timer=null;return}
+ timer=setInterval(()=>{if(gen>=40){clearInterval(timer);timer=null}else step()},320)};
+$("rst").onclick=reset;
+$("mut").oninput=()=>$("mutV").textContent=(+$("mut").value/100).toFixed(2);
+$("pop").oninput=()=>{$("popV").textContent=$("pop").value;reset()};
+reset();
+</script>
+</body>
+</html>

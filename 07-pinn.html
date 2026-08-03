@@ -1,0 +1,317 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Redes con física (PINN)</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;700&family=IBM+Plex+Sans:wght@400;500;600&family=IBM+Plex+Mono:wght@400;600&display=swap');
+:root{
+  --ink:#10202c; --paper:#edefea; --card:#fff; --line:#d6dbd4; --muted:#5d6b72;
+  --amber:#c8760a; --teal:#0f8f82; --indigo:#3f4fbf; --violet:#7a55c7; --red:#ad3a2c;
+  --disp:'Space Grotesk','Segoe UI',sans-serif;
+  --body:'IBM Plex Sans','Segoe UI',Arial,sans-serif;
+  --mono:'IBM Plex Mono','Consolas',monospace;
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--paper);color:var(--ink);font:16px/1.6 var(--body)}
+.wrap{max-width:1060px;margin:0 auto;padding:0 22px 70px}
+a{color:var(--indigo)}
+
+/* ---- cabecera ---- */
+header.top{background:var(--ink);color:#e9eef0;margin-bottom:34px}
+header.top .wrap{padding-top:30px;padding-bottom:34px}
+.eyebrow{font:600 12px/1 var(--mono);letter-spacing:.16em;text-transform:uppercase;color:var(--amber)}
+header.top h1{font:700 clamp(2.1rem,5.4vw,3.5rem)/1.03 var(--disp);margin:14px 0 0;letter-spacing:-.02em}
+header.top .lead{max-width:640px;color:#b9c6cc;margin:14px 0 0;font-size:1.06rem}
+.backlink{display:inline-block;margin-top:24px;font:400 13px/1 var(--mono);color:#8fa3ac;text-decoration:none;border-bottom:1px solid #33475280;padding-bottom:3px}
+.backlink:hover{color:#fff}
+.chips{display:flex;flex-wrap:wrap;gap:7px;margin-top:20px}
+.chip{font:600 11px/1 var(--mono);letter-spacing:.06em;text-transform:uppercase;background:#1d3242;color:#9fc6cd;border-radius:4px;padding:6px 9px}
+
+/* ---- secciones ---- */
+section{margin-top:44px}
+h2{font:700 1.55rem/1.15 var(--disp);margin:0 0 6px;letter-spacing:-.01em}
+h2 .num{font:600 12px/1 var(--mono);color:var(--amber);display:block;letter-spacing:.16em;margin-bottom:9px}
+h3{font:600 1.02rem/1.3 var(--disp);margin:0 0 6px}
+p{margin:10px 0}
+.sub{color:var(--muted);max-width:700px}
+ul{padding-left:18px;margin:8px 0}
+li{margin:5px 0}
+.small{font-size:.88rem;color:var(--muted)}
+
+.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px}
+.grid{display:grid;gap:14px}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+@media(max-width:820px){.g2,.g3{grid-template-columns:1fr}}
+.tick{border-top:4px solid var(--teal)}
+.cross{border-top:4px solid var(--red)}
+.tag{display:inline-block;font:600 11px/1 var(--mono);letter-spacing:.05em;text-transform:uppercase;padding:5px 8px;border-radius:4px;background:#e4e9e2;color:#41525a}
+.tag.a{background:#f7ead6;color:#8a5106}.tag.t{background:#dff0ed;color:#0a6960}
+.tag.i{background:#e4e6f8;color:#2f3c96}.tag.v{background:#eee5f8;color:#5b3b98}
+
+.note{border-left:4px solid var(--amber);background:#faf3e8;border-radius:0 10px 10px 0;padding:13px 16px;margin:16px 0}
+.note.t{border-color:var(--teal);background:#e9f5f3}
+.note.r{border-color:var(--red);background:#f9ecea}
+.note strong{font-family:var(--disp)}
+
+table{width:100%;border-collapse:collapse;font-size:.92rem;background:var(--card)}
+th,td{text-align:left;vertical-align:top;padding:11px 12px;border-bottom:1px solid var(--line)}
+th{font:600 11px/1.3 var(--mono);letter-spacing:.08em;text-transform:uppercase;color:#41525a;background:#e6eae4}
+td code,code{font:600 .88em var(--mono);background:#e6eae4;border-radius:4px;padding:2px 5px}
+.tablebox{border:1px solid var(--line);border-radius:14px;overflow:hidden}
+
+/* ---- consola oscura (elemento firma) ---- */
+.console{background:var(--ink);color:#e9eef0;border-radius:18px;padding:24px;margin-top:16px}
+.console h3{color:#fff;font-size:1.1rem}
+.console .small,.console .sub{color:#93a6ae}
+.console label{display:block;font:600 11px/1 var(--mono);letter-spacing:.1em;text-transform:uppercase;color:#8fa3ac;margin-bottom:7px}
+.controls{display:flex;flex-wrap:wrap;gap:16px;align-items:flex-end;margin:18px 0}
+.controls>div{flex:1 1 150px}
+select,input[type=range]{width:100%}
+select{font:400 14px var(--body);padding:8px;border-radius:8px;border:1px solid #33475f;background:#1a2c3a;color:#e9eef0}
+input[type=range]{accent-color:var(--amber);height:26px}
+.btn{font:600 13px var(--body);border:none;border-radius:8px;padding:10px 15px;cursor:pointer;background:var(--amber);color:#12202b}
+.btn:hover{background:#e08b17}
+.btn.ghost{background:transparent;color:#c6d4da;border:1px solid #37505f}
+.btn.ghost:hover{background:#1c2f3d}
+.btn:focus-visible,select:focus-visible,input:focus-visible,a:focus-visible,button:focus-visible{outline:2px solid var(--amber);outline-offset:2px}
+.readout{font:400 13px/1.55 var(--mono);background:#0a161f;border:1px solid #23394a;border-radius:10px;padding:12px 14px;margin-top:14px;color:#c7d6dd;min-height:44px}
+.readout b{color:var(--amber);font-weight:600}
+.pill{font:600 11px var(--mono);color:#0a161f;background:#7fd6cb;border-radius:4px;padding:3px 6px}
+
+/* ---- rejillas numéricas (CNN) ---- */
+.cellgrid{display:inline-grid;gap:2px}
+.cell{width:34px;height:30px;display:grid;place-items:center;font:400 11px var(--mono);border-radius:3px;background:#22384a;color:#cfe0e7}
+.cell.win{outline:2px solid var(--amber);z-index:2}
+.cell.cur{background:var(--amber);color:#12202b;font-weight:600}
+.cell.empty{background:#16242f;color:#3d5361}
+@media(max-width:560px){.cell{width:27px;height:25px;font-size:10px}}
+.legend{display:flex;gap:14px;flex-wrap:wrap;font:400 12px var(--mono);color:#8fa3ac;margin-top:12px}
+
+/* ---- pie ---- */
+footer{border-top:1px solid var(--line);margin-top:56px;padding-top:20px;color:var(--muted);font-size:.86rem}
+.serie{display:grid;gap:10px;grid-template-columns:repeat(2,minmax(0,1fr));margin-top:14px}
+@media(max-width:820px){.serie{grid-template-columns:1fr}}
+.serie a{display:block;background:var(--card);border:1px solid var(--line);border-radius:12px;padding:13px 15px;text-decoration:none;color:var(--ink)}
+.serie a:hover{border-color:var(--amber)}
+.serie a span{display:block;font:600 11px var(--mono);letter-spacing:.1em;text-transform:uppercase;color:var(--amber);margin-bottom:4px}
+.serie a em{font-style:normal;color:var(--muted);font-size:.86rem}
+.serie a.soon{opacity:.55;pointer-events:none}
+.serie a.soon span{color:var(--muted)}
+
+@media(prefers-reduced-motion:reduce){*{animation:none!important;transition:none!important}html{scroll-behavior:auto}}
+@media print{header.top{background:#fff;color:#000}.console{background:#fff;color:#000;border:1px solid #999}.cell{background:#eee;color:#000}}
+</style>
+</head>
+<body>
+<header class="top"><div class="wrap">
+<p class="eyebrow">Serie IA para energías renovables · Guía 07</p>
+<h1>Redes con física (PINN)</h1>
+<p class="lead">Meter una ecuación conocida dentro de la función de pérdida para que el modelo no invente donde no hay datos.</p>
+<div class="chips"><span class="chip">Pocos datos</span><span class="chip">Extrapolación</span><span class="chip">Hidrógeno · Geotermia</span></div>
+<a class="backlink" href="00-indice.html">&larr; Volver al índice de la serie</a>
+</div></header>
+<div class="wrap">
+
+<section>
+<h2><span class="num">01 · La idea</span>Cuando ya sabes la ecuación, dísela al modelo</h2>
+<p class="sub">Una red normal solo conoce los puntos que le diste. Fuera de ese rango inventa. Una PINN añade a la función de pérdida un segundo término: cuánto viola la red una ecuación física que tú ya conoces.</p>
+<div class="grid g2" style="margin-top:14px">
+<div class="card"><h3>Pérdida de una red normal</h3><p class="small"><code>error = distancia a los datos observados</code></p><p class="small">Si los datos cubren dos segundos, la red no tiene ninguna razón para comportarse bien en el segundo tres.</p></div>
+<div class="card"><h3>Pérdida de una PINN</h3><p class="small"><code>error = distancia a los datos + λ · violación de la ecuación</code></p><p class="small">Ese segundo término se evalúa en cualquier punto, incluso donde no mediste nada. La física actúa como datos infinitos y gratis.</p></div>
+</div>
+<div class="note"><strong>Ejemplo mínimo:</strong> para un resorte, la ley de Hooke relaciona fuerza y desplazamiento y da lugar a una ecuación de movimiento. Si la red predice un movimiento que no la cumple, se la penaliza aunque coincida perfectamente con los puntos medidos.</div>
+</section>
+
+<section>
+<h2><span class="num">02 · Banco de pruebas</span>Un oscilador con datos solo al principio</h2>
+<p class="sub">Solo se midió el primer tramo (zona clara). El resto hay que predecirlo. Sube el peso del término físico y mira qué pasa fuera de la zona con datos.</p>
+
+<div class="console">
+  <div class="controls">
+    <div><label for="lam">Peso del término físico λ · <span id="lamV">0.00</span></label><input type="range" id="lam" min="0" max="100" value="0"></div>
+    <div><label for="np">Puntos medidos · <span id="npV">9</span></label><input type="range" id="np" min="5" max="18" value="9"></div>
+  </div>
+  <div id="plot"></div>
+  <div class="legend"><span style="color:#7fd6cb">— comportamiento real</span><span style="color:#e0a13c">— lo que predice el modelo</span><span>● puntos medidos</span></div>
+  <div class="readout" id="read"></div>
+</div>
+
+<div class="grid g2" style="margin-top:16px">
+<div class="card"><h3>Con λ = 0</h3><p class="small">La curva pasa por todos los puntos medidos y se dispara en cuanto se acaban. El error en la zona sin datos es enorme y el entrenamiento no da ninguna señal de alarma: en los datos que vio, va perfecto.</p></div>
+<div class="card"><h3>Con λ alto</h3><p class="small">La ecuación sujeta la curva donde no hay mediciones. El modelo extrapola con sentido físico porque no puede alejarse de lo que la ecuación permite.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">03 · Qué ecuaciones</span>Lo que puede entrar en la pérdida</h2>
+<div class="tablebox"><table>
+<tr><th>Ecuación</th><th>Dónde se usa</th></tr>
+<tr><td><strong>Oscilador / ley de Hooke</strong></td><td>Vibración de palas, estructuras, sistemas mecánicos amortiguados.</td></tr>
+<tr><td><strong>Ecuación de onda</strong></td><td>Propagación acústica y sísmica, caracterización de subsuelo para geotermia.</td></tr>
+<tr><td><strong>Ecuación de calor</strong></td><td>Transferencia térmica en módulos, colectores, intercambiadores.</td></tr>
+<tr><td><strong>Difusión y permeabilidad</strong></td><td>Paso de hidrógeno a través de materiales, fugas en almacenamiento.</td></tr>
+<tr><td><strong>Navier-Stokes simplificadas</strong></td><td>Flujo de aire en el entorno de un aerogenerador, efecto estela.</td></tr>
+<tr><td><strong>Balances de conservación</strong></td><td>Energía o masa que entra y sale de un sistema: no puede desaparecer.</td></tr>
+</table></div>
+<div class="note t"><strong>Ni siquiera hace falta la ecuación completa.</strong> Imponer solo que la energía se conserve, o que una temperatura no baje de la ambiente, ya elimina la mayor parte de las predicciones absurdas.</div>
+</section>
+
+<section>
+<h2><span class="num">04 · Contraste</span>Frente a lo que ya se hacía</h2>
+<div class="grid g3">
+<div class="card"><h3>Elementos finitos</h3><p class="small">Resuelve la ecuación con mucha precisión, pero hay que mallar el dominio y cada nuevo caso es una simulación nueva. Preciso y lento.</p></div>
+<div class="card"><h3>Red neuronal normal</h3><p class="small">Rapidísima al usarla y necesita muchos datos. Fuera del rango que vio, no hay garantía de nada.</p></div>
+<div class="card"><h3>PINN</h3><p class="small">Se entrena una vez con pocos datos y respeta la física. Después responde en milisegundos. Entrenarla es delicado: es donde está el coste.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">05 · Cuándo</span>Cuándo sí y cuándo no</h2>
+<div class="grid g2">
+<div class="card tick">
+<h3>Úsala cuando…</h3>
+<ul>
+<li><strong>Conoces la ecuación</strong> que gobierna el fenómeno y tienes <strong>pocos datos</strong>.</li>
+<li>Necesitas <strong>extrapolar</strong> fuera del rango medido y que el resultado siga teniendo sentido.</li>
+<li>Una simulación numérica es correcta pero <strong>demasiado lenta</strong> para usarla en tiempo real o miles de veces.</li>
+<li>Quieres el problema inverso: estimar un <strong>parámetro del material</strong> (permeabilidad, conductividad) a partir de mediciones.</li>
+</ul>
+</div>
+<div class="card cross">
+<h3>No la uses cuando…</h3>
+<ul>
+<li>No hay ecuación. Predecir el precio de la energía no tiene una ley física detrás.</li>
+<li>Tienes datos de sobra que ya cubren todo el rango de operación: una red normal es más simple y rinde igual.</li>
+<li>El fenómeno es demasiado complejo para las ecuaciones simplificadas que puedes imponer: estarías anclando el modelo a una física falsa.</li>
+<li>Necesitas resultados rápido. Equilibrar el término de datos con el físico consume mucho tiempo de ajuste.</li>
+</ul>
+</div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">06 · Aplicación</span>En energías renovables</h2>
+<div class="grid g3">
+<div class="card"><span class="tag v">Hidrógeno</span><h3 style="margin-top:10px">Permeación en materiales</h3><p class="small">La molécula de hidrógeno atraviesa casi cualquier material. Simularlo con elementos finitos o Monte Carlo es costoso; una PINN con la ecuación de difusión y unos pocos ensayos reemplaza buena parte de esas corridas.</p></div>
+<div class="card"><span class="tag t">Eólica</span><h3 style="margin-top:10px">Vibración estructural</h3><p class="small">Predecir la respuesta de una pala con la ecuación de movimiento incorporada, para estimar fatiga con pocos sensores instalados.</p></div>
+<div class="card"><span class="tag i">Geotermia</span><h3 style="margin-top:10px">Campo térmico</h3><p class="small">Estimar temperatura y flujo en el subsuelo entre pozos, donde solo hay medición en unos pocos puntos y la ecuación de calor rellena el resto.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">07 · Ajustes</span>Lo que hay que equilibrar</h2>
+<div class="tablebox"><table>
+<tr><th>Ajuste</th><th>Arranque</th><th>Qué significa</th></tr>
+<tr><td>Peso λ del término físico</td><td><code>0.1 – 10</code></td><td>El hiperparámetro crítico. Muy bajo, la física no se nota; muy alto, ignora los datos reales y ajusta una ecuación idealizada.</td></tr>
+<tr><td>Puntos de colocación</td><td><code>1000 – 10000</code></td><td>Los puntos donde se evalúa la ecuación. No son mediciones: se eligen dentro del dominio, incluso donde no hay nada medido.</td></tr>
+<tr><td>Activación</td><td><code>tanh</code></td><td>Debe ser suave y derivable varias veces, porque la ecuación usa derivadas de la salida. ReLU no sirve aquí.</td></tr>
+<tr><td>Arquitectura</td><td><code>4–8 capas, 20–50 neuronas</code></td><td>Redes pequeñas y profundas. No hacen falta arquitecturas grandes.</td></tr>
+<tr><td>Condiciones de frontera</td><td>término aparte</td><td>Valores conocidos en los bordes o en el instante inicial. Suelen ir con su propio peso en la pérdida.</td></tr>
+<tr><td>Escalado del dominio</td><td><code>0 – 1</code></td><td>Tiempo y espacio normalizados. Con unidades físicas crudas el entrenamiento se desestabiliza.</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2><span class="num">08 · Trampas</span>Dónde se atasca</h2>
+<div class="grid g2">
+<div class="card"><h3>Los dos términos compiten</h3><p class="small">Datos y física tiran en direcciones distintas y el entrenamiento se queda oscilando. Se resuelve ajustando λ, a veces subiéndolo poco a poco durante el entrenamiento.</p></div>
+<div class="card"><h3>Física equivocada</h3><p class="small">Si la ecuación impuesta no describe bien el sistema real, el modelo será coherente y erróneo a la vez, que es la peor combinación.</p></div>
+<div class="card"><h3>Coste de entrenamiento</h3><p class="small">Calcular derivadas de la red en miles de puntos por iteración es caro. Estos modelos históricamente se apoyaron en hardware muy potente.</p></div>
+<div class="card"><h3>La alternativa más ligera</h3><p class="small">Una red generativa condicionada por la misma ecuación consigue hoy resultados parecidos con menos coste, y además produce variedad de escenarios. Merece la pena compararlas antes de decidir.</p></div>
+</div>
+</section>
+
+<section>
+<h2><span class="num">09 · Vocabulario</span>Ocho palabras y sigues</h2>
+<div class="tablebox"><table>
+<tr><th>Término</th><th>En una línea</th></tr>
+<tr><td><code>PINN</code></td><td>Red neuronal informada por física: la ecuación entra en la pérdida.</td></tr>
+<tr><td><code>término residual</code></td><td>Cuánto incumple la red la ecuación en un punto dado.</td></tr>
+<tr><td><code>punto de colocación</code></td><td>Punto donde se comprueba la ecuación, sin necesidad de medición.</td></tr>
+<tr><td><code>condición de frontera</code></td><td>Valor conocido en el borde del dominio o en el instante inicial.</td></tr>
+<tr><td><code>problema inverso</code></td><td>Estimar un parámetro físico desconocido a partir de observaciones.</td></tr>
+<tr><td><code>extrapolar</code></td><td>Predecir fuera del rango donde hubo datos.</td></tr>
+<tr><td><code>diferenciación automática</code></td><td>Cómo la red calcula sus propias derivadas para evaluar la ecuación.</td></tr>
+<tr><td><code>sustituto / surrogate</code></td><td>Modelo rápido que reemplaza una simulación lenta.</td></tr>
+</table></div>
+</section>
+
+<section>
+<h2><span class="num">10 · Sigue</span>Las demás guías de la serie</h2>
+<div class="serie">
+<a href="01-cnn.html"><span>Guía 01</span>Redes convolucionales (CNN)<br><em>Cómo una red aprende a ver una fisura.</em></a>
+<a href="02-lstm.html"><span>Guía 02</span>Redes recurrentes (LSTM)<br><em>Cortar una serie de tiempo en ejemplos de entrenamiento.</em></a>
+<a href="03-hiperparametros.html"><span>Guía 03</span>Hiperparámetros<br><em>Qué mueve cada perilla y qué síntoma deja.</em></a>
+<a href="04-datos.html"><span>Guía 04</span>Preparación de datos<br><em>Nulos, atípicos, escalado y fuga de información.</em></a>
+<a href="05-autoencoder.html"><span>Guía 05</span>Autoencoders y U-Net<br><em>Comprimir y reconstruir para detectar lo que no encaja.</em></a>
+<a href="06-gan.html"><span>Guía 06</span>Redes generativas (GAN)<br><em>El falsificador contra la policía.</em></a>
+<a href="08-arboles.html"><span>Guía 08</span>Random Forest y SVM<br><em>Los modelos que ganan cuando el dato es una tabla.</em></a>
+<a href="09-geneticos.html"><span>Guía 09</span>Algoritmos genéticos<br><em>Optimizar por selección, cruce y mutación.</em></a>
+<a href="10-transformers.html"><span>Guía 10</span>Transformers, LLM y agentes<br><em>Atención, tokens y qué se paga al usar un agente.</em></a>
+</div>
+</section>
+
+<footer>
+<p><a href="index.html">&larr; Todas las explicaciones</a></p>
+<p>Guía de estudio · elaborada a partir de la clase de IA aplicada a energías renovables. Los valores de arranque son puntos de partida, no verdades: se ajustan con tus datos.</p>
+</footer>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const T1=8, TD=2.5, DEG=5;
+const real=t=>Math.exp(-0.35*t)*Math.cos(2.5*t);
+let poly=[];
+
+function fit(n){
+ const xs=[],ys=[];
+ for(let i=0;i<n;i++){const t=TD*i/(n-1);
+  xs.push(t/T1); ys.push(real(t)+((i*37)%11-5)/220)}
+ const m=DEG+1, A=[];
+ for(let r=0;r<m;r++){A.push(new Array(m+1).fill(0));
+  for(let c=0;c<m;c++)for(let k=0;k<n;k++)A[r][c]+=Math.pow(xs[k],r+c);
+  for(let k=0;k<n;k++)A[r][m]+=ys[k]*Math.pow(xs[k],r)}
+ for(let i=0;i<m;i++){let p=i;for(let r=i+1;r<m;r++)if(Math.abs(A[r][i])>Math.abs(A[p][i]))p=r;
+  [A[i],A[p]]=[A[p],A[i]];
+  for(let r=0;r<m;r++){if(r===i||Math.abs(A[i][i])<1e-12)continue;const f=A[r][i]/A[i][i];
+   for(let c=i;c<=m;c++)A[r][c]-=f*A[i][c]}}
+ poly=A.map((row,i)=>Math.abs(row[i])<1e-12?0:row[m]/row[i]);
+ return {xs,ys}}
+const pv=t=>{const x=t/T1;let s=0;for(let i=0;i<poly.length;i++)s+=poly[i]*Math.pow(x,i);return Math.max(-3,Math.min(3,s))};
+
+function draw(){
+ const n=+$("np").value, lam=+$("lam").value/100;
+ $("npV").textContent=n; $("lamV").textContent=lam.toFixed(2);
+ const d=fit(n);
+ const W=700,H=250,x0=34,y0=125,sx=(W-x0-16)/T1,sy=72;
+ const X=t=>x0+t*sx, Y=v=>y0-Math.max(-2.4,Math.min(2.4,v))*sy;
+ const mix=t=>(1-lam)*pv(t)+lam*real(t);
+ let pr="",pm="";
+ for(let i=0;i<=320;i++){const t=i*T1/320;
+  pr+=(i?"L":"M")+X(t).toFixed(1)+" "+Y(real(t)).toFixed(1)+" ";
+  pm+=(i?"L":"M")+X(t).toFixed(1)+" "+Y(mix(t)).toFixed(1)+" "}
+ let s=`<svg viewBox="0 0 ${W} ${H}" style="width:100%;height:auto" role="img" aria-label="Predicción del oscilador dentro y fuera de la zona con datos">`;
+ s+=`<rect x="${x0}" y="10" width="${TD*sx}" height="${H-46}" fill="#1d3242"/>`;
+ s+=`<line x1="${x0}" y1="${y0}" x2="${W-14}" y2="${y0}" stroke="#2b4152"/>`;
+ s+=`<text x="${x0+6}" y="26" font-size="11" font-family="IBM Plex Mono,monospace" fill="#7f97a3">con datos</text>`;
+ s+=`<text x="${X(TD)+8}" y="26" font-size="11" font-family="IBM Plex Mono,monospace" fill="#7f97a3">sin datos · aquí se juega todo</text>`;
+ s+=`<path d="${pr}" fill="none" stroke="#7fd6cb" stroke-width="2" stroke-dasharray="5 4"/>`;
+ s+=`<path d="${pm}" fill="none" stroke="#e0a13c" stroke-width="2.5"/>`;
+ d.xs.forEach((x,i)=>{s+=`<circle cx="${X(x*T1).toFixed(1)}" cy="${Y(d.ys[i]).toFixed(1)}" r="3.6" fill="#fff"/>`});
+ s+=`<text x="${x0}" y="${H-8}" font-size="10" font-family="IBM Plex Mono,monospace" fill="#5d7383">tiempo →</text></svg>`;
+ $("plot").innerHTML=s;
+ let e=0,c=0;for(let t=TD;t<=T1;t+=0.05){e+=Math.abs(mix(t)-real(t));c++}
+ e/=c;
+ const msg = e>1.5?"El modelo se dispara en cuanto se acaban los datos. En la zona medida es impecable, y eso es justo lo que hace peligroso este fallo.":
+             e>0.35?"Ya no se dispara, pero todavía se despega de la física real en la parte final.":
+             "La ecuación mantiene la predicción pegada al comportamiento real donde no hay ni una sola medición.";
+ $("read").innerHTML=`λ = <b>${lam.toFixed(2)}</b> · ${n} puntos medidos en el primer tramo.<br>`+
+  `Error medio en la zona sin datos: <b>${e.toFixed(2)}</b><br><span class="pill">${msg}</span>`}
+["lam","np"].forEach(i=>$(i).oninput=draw);
+draw();
+</script>
+</body>
+</html>
